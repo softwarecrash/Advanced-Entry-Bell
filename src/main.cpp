@@ -84,6 +84,8 @@ void loop()
     break;
 
   case ARMED:
+
+  //weiteres case in dem überprüft wird das wenn zweiter sensor aktiviert und erster deaktiviert wird gewartet wird bis zweiter auch wieder deaktiviert, dann erst auslösen
       stateLED(155,255,0);
     if (sensor2 != sensorState_2)
     {
