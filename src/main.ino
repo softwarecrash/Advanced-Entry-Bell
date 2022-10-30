@@ -13,6 +13,21 @@
   - videoplayer mit kamerafeed
 */
 #include <Arduino.h>
+
+#include <EEPROM.h>
+
+#include <ArduinoJson.h>
+#include <ESP8266mDNS.h>
+#include <ESPAsyncWiFiManager.h>
+#include <ESPAsyncTCP.h>
+#include <ESPAsyncWebServer.h>
+
+#include "Settings.h"
+
+#include "webpages/htmlCase.h"     // The HTML Konstructor
+#include "webpages/main.h"         // landing page with menu
+#include "webpages/settings.h"     // settings page
+#include "webpages/settingsedit.h" // mqtt settings page
 //------------------------ Basic Configuration----------------------------
 
 #define sensorIn_1 D5 // Pin of the first sensor when entering the room
