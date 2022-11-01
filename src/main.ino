@@ -76,13 +76,14 @@ void setup()
   pinMode(bellOut, OUTPUT);
 
   FastLED.addLeds<WS2812B, ledPin, GRB>(leds, amount_led);
-  //-----------------------------------------------------------------------------------
-  for (size_t i = 600; i < 850; i++)
-  {
-    tone(buzzerOut, i);
-    delay(1);
-  }
-  noTone(buzzerOut);
+   //-----------------------------------------------------------------------------------
+for (size_t i = 750; i < 900; i++)
+{
+  tone(buzzerOut, i);
+  delay(2);
+}
+noTone(buzzerOut);
+
 
   Serial.println("Setup Complete... Start watching");
 
@@ -93,7 +94,6 @@ void setup()
   leds[6] = CRGB::BlueViolet;
   leds[7] = CRGB::BlueViolet;
   FastLED.show();
-  FastLED.delay(10);
 }
 
 void loop()
@@ -109,71 +109,71 @@ void stateRing()
 {
   switch (state)
   {
-  case IDLE:
-    if (sensor1 != sensorState_1)
-    {
-      state = IN;
-      lastStateMillis = millis();
-    }
-    else if (sensor2 != sensorState_2)
-    {
-      state = OUT;
-      lastStateMillis = millis();
-    }
-    break;
+    case IDLE:
+      if (sensor1 != sensorState_1)
+      {
+        state = IN;
+        lastStateMillis = millis();
+      }
+      else if (sensor2 != sensorState_2)
+      {
+        state = OUT;
+        lastStateMillis = millis();
+      }
+      break;
 
-  case IN:
-    if (sensor2 != sensorState_2)
-    {
-      state = RING;
-      lastStateMillis = millis();
-    }
-    else if (millis() >= (lastStateMillis + signalTimeout))
-    {
-      state = IDLE;
-    }
-    break;
+    case IN:
+      if (sensor2 != sensorState_2)
+      {
+        state = RING;
+        lastStateMillis = millis();
+      }
+      else if (millis() >= (lastStateMillis + signalTimeout))
+      {
+        state = IDLE;
+      }
+      break;
 
-  case RING:
-    bell = true;
-    if (millis() >= (lastStateMillis + bellSignalTime))
-    {
-      bell = false;
-      amountIn++;
-      serialState("Objects going in: " + String(amountIn));
-      state = COOLDOWN;
-      lastStateMillis = millis();
-    }
-    break;
+    case RING:
+      bell = true;
+      if (millis() >= (lastStateMillis + bellSignalTime))
+      {
+        bell = false;
+        amountIn++;
+        serialState("Objects going in: " + String(amountIn));
+        state = COOLDOWN;
+        lastStateMillis = millis();
+      }
+      break;
 
-  case OUT:
-    // hier haut noch nicht ganz das hin was soll
-    if (sensor1 != sensorState_1)
-    {
-      amountOut++;
-      serialState("Objects going out: " + String(amountOut));
-      state = COOLDOWN;
-    }
-    else if (millis() >= (lastStateMillis + signalTimeout))
-    {
-      state = IDLE;
-    }
-    break;
+    case OUT:
+      // hier haut noch nicht ganz das hin was soll
+      if (sensor1 != sensorState_1)
+      {
+        amountOut++;
+        serialState("Objects going out: " + String(amountOut));
+        state = COOLDOWN;
+      }
+      else if (millis() >= (lastStateMillis + signalTimeout))
+      {
+        state = IDLE;
+      }
+      break;
 
-  case COOLDOWN:
-    if (millis() >= (lastStateMillis + coolDownTime))
-    {
-      serialState("Objects inside: " + String((amountIn - amountOut)));
-      state = IDLE;
-    }
-    else if (sensor1 != sensorState_1 || sensor2 != sensorState_2)
-    {
-      lastStateMillis = millis();
-    }
-    break;
+    case COOLDOWN:
+      if (millis() >= (lastStateMillis + coolDownTime))
+      {
+        serialState("Objects inside: " + String((amountIn - amountOut)));
+        state = IDLE;
+      }
+      else if (sensor1 != sensorState_1 || sensor2 != sensorState_2)
+      {
+        lastStateMillis = millis();
+      }
+      break;
 
-  default:
-    break;
+    default:
+      break;
   }
 }
 
@@ -186,24 +186,39 @@ void stateLED()
     FastLED.clear(true);
     switch (state)
     {
-    case COOLDOWN:
-      for (size_t i = 0; i < amount_led; i++)
-      {
-        leds[i] = CRGB::Blue;
-      }
-      break;
-    case IDLE:
-      for (size_t i = 0; i < amount_led; i++)
-      {
-        leds[i] = CRGB::Green;
-      }
-      break;
-    case IN:
-      leds[0] = CRGB::Red;
-      break;
-    case OUT:
-      leds[7] = CRGB::Yellow;
-      break;
+      case COOLDOWN:
+        for (size_t i = 0; i < amount_led; i++)
+        {
+          leds[i] = CRGB::Blue;
+        }
+        break;
+
+      case IDLE:
+        for (size_t i = 0; i < amount_led; i++)
+        {
+          leds[i] = CRGB::Green;
+        }
+        break;
+
+      case IN:
+  		for(int i = 0; i < amount_led; i++)
+  		{
+			leds[i] = CRGB(255, 119, 0);
+			FastLED.show();
+      FastLED.delay(50);
+      fadeToBlackBy( leds, amount_led, 200);
+  		}
+        break;
+
+      case OUT:
+  		for(int i = (amount_led-1); i >= 0; i--)
+  		{
+			leds[i] = CRGB(212, 255, 0);
+			FastLED.show();
+      FastLED.delay(50);
+      fadeToBlackBy( leds, amount_led, 200);
+  		}
+        break;
     }
     FastLED.show();
   }
