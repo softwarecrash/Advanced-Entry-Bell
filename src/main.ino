@@ -135,8 +135,12 @@ void stateRing()
 
   case RING:
     bell = true;
+    tone(buzzerOut, 800);
+    if (millis() >= (lastStateMillis + (bellSignalTime/2))) tone(buzzerOut, 650);
+  
     if (millis() >= (lastStateMillis + bellSignalTime))
     {
+        noTone(buzzerOut);
       bell = false;
       amountIn++;
       serialState("Objects going in: " + String(amountIn));
