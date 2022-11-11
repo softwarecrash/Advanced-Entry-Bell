@@ -35,9 +35,9 @@
 //------------------------ Basic Configuration----------------------------
 #define sensorIn_1 D5 // Pin of the first sensor when entering the room
 #define sensorIn_2 D6 // Pin of the second sensor when entering the room
-#define buzzerOut D7  // Pin for the buzzer that can make *BEEP BOOP BEEP*
-#define bellOut D8    // Pin for external switch or relay that will ring the big bell
-#define ledPin D0     // pin for ws2812 rgb stripe
+#define buzzerOut  D7 // Pin for the buzzer that can make *BEEP BOOP BEEP*
+#define bellOut    D8 // Pin for external switch or relay that will ring the big bell
+#define ledPin     D0 // pin for ws2812 rgb stripe
 
 #define sensorState_1 false // idle state of sensor 1
 #define sensorState_2 false // idle state of sensor 2
@@ -173,12 +173,12 @@ void setup()
   pinMode(sensorIn_2, INPUT_PULLUP);
   pinMode(buzzerOut, OUTPUT);
   pinMode(bellOut, OUTPUT);
+  FastLED.addLeds<WS2812B, ledPin, GRB>(leds, amount_led);
   settings.load();
   WiFi.persistent(true);
   // AsyncWiFiManager wm(&server, &dns); in init teil verschoben
   wm.setSaveConfigCallback(saveConfigCallback);
   AsyncWiFiManagerParameter custom_device_name("device_name", "Device Name", NULL, 32);
-  AsyncWiFiManagerParameter custom_coolDown_time("coolDown_time", "Cooldown Time (ms)", NULL, 5);
   AsyncWiFiManagerParameter custom_coolDown_time("coolDown_time", "Cooldown Time (ms)", NULL, 5);
   AsyncWiFiManagerParameter custom_bellSignal_time("bellSignal_time", "Bell Pulse Time (ms)", NULL, 5);
   AsyncWiFiManagerParameter custom_signal_timeout("signal_timeout", "Signal Timeout (ms)", NULL, 5);
@@ -208,7 +208,7 @@ void setup()
     ESP.restart();
   }
 
-  if (wifiConnected)
+  if (wifiConnected) //if wifi connected, start some webservers
   {
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
               {
@@ -310,8 +310,6 @@ void setup()
   {
 
   }
-  
-  FastLED.addLeds<WS2812B, ledPin, GRB>(leds, amount_led);
   //-----------------------------------------------------------------------------------
   for (size_t i = 750; i < 900; i++) // make a startup Sound
   {
