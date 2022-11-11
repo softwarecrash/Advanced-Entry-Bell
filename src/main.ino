@@ -66,6 +66,8 @@ byte ledChange; // switch for changed led data
 int amountIn;
 int amountOut;
 long unsigned int lastStateMillis;
+long unsigned int wsTime = 0;
+int wsPixNum = 0;
 
 void setup()
 {
@@ -136,11 +138,13 @@ void stateRing()
   case RING:
     bell = true;
     tone(buzzerOut, 800);
-    if (millis() >= (lastStateMillis + (bellSignalTime/2))) tone(buzzerOut, 650);
-  
+    if (millis() >= (lastStateMillis + (bellSignalTime / 2)))
+    {
+      tone(buzzerOut, 650);
+    }
     if (millis() >= (lastStateMillis + bellSignalTime))
     {
-        noTone(buzzerOut);
+      noTone(buzzerOut);
       bell = false;
       amountIn++;
       serialState("Objects going in: " + String(amountIn));
@@ -153,9 +157,9 @@ void stateRing()
     // hier haut noch nicht ganz das hin was soll
     if (sensor2 != sensorState_2 && sensor1 != sensorState_1)
     {
-        amountOut++;
-        serialState("Objects going out: " + String(amountOut));
-        state = COOLDOWN;
+      amountOut++;
+      serialState("Objects going out: " + String(amountOut));
+      state = COOLDOWN;
     }
     else if (millis() >= (lastStateMillis + signalTimeout))
     {
@@ -180,20 +184,17 @@ void stateRing()
   }
 }
 
-void stateLED()
+void stateLED() //LED animate states
 {
-  if (state != ledChange)
+  if (state != ledChange) FastLED.clear(true);
+  switch (state)
   {
-    ledChange = state; // set the current state to change
-
-    FastLED.clear(true);
-    switch (state)
-    {
     case COOLDOWN:
       for (size_t i = 0; i < amount_led; i++)
       {
         leds[i] = CRGB::Blue;
       }
+      if (state != ledChange) FastLED.show();
       break;
 
     case IDLE:
@@ -201,33 +202,53 @@ void stateLED()
       {
         leds[i] = CRGB::Green;
       }
+      if (state != ledChange) FastLED.show();
       break;
 
     case IN:
-      for (int i = 0; i < amount_led; i++)
+
+      if (millis() >= (wsTime + 50))
       {
-        leds[i] = CRGB(255, 119, 0);
+        leds[wsPixNum] = CRGB(255, 119, 0);
         FastLED.show();
-        FastLED.delay(50);
-        fadeToBlackBy(leds, amount_led, 200);
+
+
+        if (wsPixNum < (amount_led-1))
+        {
+        wsPixNum++;
+        }
+        else
+        {
+          wsPixNum = 0;
+        }
+        fadeToBlackBy( leds, amount_led, 200);
+        wsTime = millis();
       }
       break;
 
     case OUT:
-      for (int i = (amount_led - 1); i >= 0; i--)
+
+      if (millis() >= (wsTime + 50))
       {
-        leds[i] = CRGB(212, 255, 0);
+        leds[wsPixNum] = CRGB(212, 255, 0);
         FastLED.show();
-        FastLED.delay(50);
-        fadeToBlackBy(leds, amount_led, 200);
+        if (wsPixNum > 0)
+        {
+          wsPixNum--;
+        }
+        else
+        {
+          wsPixNum = (amount_led-1);
+        }
+        fadeToBlackBy( leds, amount_led, 200);
+        wsTime = millis();
       }
       break;
-    }
-    FastLED.show();
   }
+  ledChange = state; // set the current state to change
 }
 
-void serialState(String message)
+void serialState(String message) //serial messages, only message changes will go out
 {
   String tmpMessage;
   if (tmpMessage != message)
