@@ -25,7 +25,7 @@
 
 #include <FastLED.h>
 
-#include "Settings.h"              // save and load config data
+#include "Settings.h" // save and load config data
 
 #include "webpages/htmlCase.h"     // The HTML Konstructor
 #include "webpages/main.h"         // landing page with menu
@@ -33,11 +33,11 @@
 #include "webpages/settingsedit.h" // edit settings page
 
 //------------------------ Basic Configuration----------------------------
-#define sensorIn_1  D5    // Pin of the first sensor when entering the room
-#define sensorIn_2  D6    // Pin of the second sensor when entering the room
-#define buzzerOut   D7    // Pin for the buzzer that can make *BEEP BOOP BEEP*
-#define bellOut     D8    // Pin for external switch or relay that will ring the big bell
-#define ledPin      D0    // pin for ws2812 rgb stripe
+#define sensorIn_1 D5 // Pin of the first sensor when entering the room
+#define sensorIn_2 D6 // Pin of the second sensor when entering the room
+#define buzzerOut D7  // Pin for the buzzer that can make *BEEP BOOP BEEP*
+#define bellOut D8    // Pin for external switch or relay that will ring the big bell
+#define ledPin D0     // pin for ws2812 rgb stripe
 
 #define sensorState_1 false // idle state of sensor 1
 #define sensorState_2 false // idle state of sensor 2
@@ -51,26 +51,120 @@ long unsigned int signalTimeout = 1000;  // time after one pin is triggered to g
 //-----------------------------set internal variables-------------------------------------------
 typedef enum
 {
-  IDLE,                               // idle, wait for signal
-  IN,                                 // Possibil a person going in, first sensor triggered frist
-  RING,                               // first sensor triggered, second sensor triggered, make a ring
-  OUT,                                // Possibil a person going out, second sensor triggered first
-  COOLDOWN                            // after action, let cooldown
-} stateList;                          // list of all states
-stateList state = IDLE;               // set the initial state
-bool sensor1;                         // sensor 1 state
-bool sensor2;                         // sensor 2 state
-bool buzzer;                          // buzzer switch
-bool bell;                            // bell outgoing switch
-byte ledChange;                       // switch for changed led data
-int amountIn;                         // counter ingoing
-int amountOut;                        // counter outgoing
-long unsigned int lastStateMillis;    // time from last statechange
-long unsigned int wsTime = 0;         // animate timer
-int wsPixNum = 0;                     // animate led counter
+  IDLE,                            // idle, wait for signal
+  IN,                              // Possibil a person going in, first sensor triggered frist
+  RING,                            // first sensor triggered, second sensor triggered, make a ring
+  OUT,                             // Possibil a person going out, second sensor triggered first
+  COOLDOWN                         // after action, let cooldown
+} stateList;                       // list of all states
+stateList state = IDLE;            // set the initial state
+bool sensor1;                      // sensor 1 state
+bool sensor2;                      // sensor 2 state
+bool buzzer;                       // buzzer switch
+bool bell;                         // bell outgoing switch
+byte ledChange;                    // switch for changed led data
+int amountIn;                      // counter ingoing
+int amountOut;                     // counter outgoing
+long unsigned int lastStateMillis; // time from last statechange
+long unsigned int wsTime = 0;      // animate timer
+int wsPixNum = 0;                  // animate led counter
+bool shouldSaveConfig = false;     // flag for saving data
+bool restartNow = false;
+char jsonBuffer[1024];
 
 //------------------------------- init struct and classes---------------------------------------
 CRGB leds[amount_led];
+WiFiClient client;
+Settings settings;
+AsyncWebServer server(80);
+AsyncWebSocket ws("/ws");
+AsyncWebSocketClient *wsClient;
+DNSServer dns;
+DynamicJsonDocument jSon(1024);     // main Json
+AsyncWiFiManager wm(&server, &dns); // war im setup
+
+void saveConfigCallback() // callback for data saving
+{
+  shouldSaveConfig = true;
+}
+
+static void handle_update_progress_cb(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
+{
+  uint32_t free_space = (ESP.getFreeSketchSpace() - 0x1000) & 0xFFFFF000;
+  if (!index)
+  {
+    Update.runAsync(true);
+    if (!Update.begin(free_space))
+    {
+      Update.printError(Serial);
+    }
+  }
+
+  if (Update.write(data, len) != len)
+  {
+    Update.printError(Serial);
+  }
+
+  if (final)
+  {
+    if (!Update.end(true))
+    {
+      Update.printError(Serial);
+    }
+    else
+    {
+      AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", "Please wait while the device is booting new Firmware");
+      response->addHeader("Refresh", "10; url=/");
+      response->addHeader("Connection", "close");
+      request->send(response);
+      restartNow = true; // Set flag so main loop can issue restart call
+      serialState("Update Complete restarting....");
+    }
+  }
+}
+
+void notifyClients() // Call client for new data
+{
+  if (wsClient != nullptr && wsClient->canSend())
+  {
+    serializeJson(jSon, jsonBuffer);
+    wsClient->text(jsonBuffer);
+  }
+}
+
+void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) // prosessing callbacks from website
+{
+  AwsFrameInfo *info = (AwsFrameInfo *)arg;
+  if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT)
+  {
+    data[len] = 0;
+    if (strcmp((char *)data, "dischargeFetSwitch_on") == 0)
+    {
+    }
+  }
+}
+
+void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) // ws Events
+{
+  switch (type)
+  {
+  case WS_EVT_CONNECT:
+    wsClient = client;
+    notifyClients();
+    serialState("Websocket Client conneted: " + String(client->id()));
+    break;
+  case WS_EVT_DISCONNECT:
+    wsClient = nullptr;
+    serialState("Websocket Client disconneted: " + String(client->id()));
+    break;
+  case WS_EVT_DATA:
+    handleWebSocketMessage(arg, data, len);
+    break;
+  case WS_EVT_PONG:
+  case WS_EVT_ERROR:
+    break;
+  }
+}
 
 void setup()
 {
@@ -79,15 +173,160 @@ void setup()
   pinMode(sensorIn_2, INPUT_PULLUP);
   pinMode(buzzerOut, OUTPUT);
   pinMode(bellOut, OUTPUT);
+  settings.load();
+  WiFi.persistent(true);
+  // AsyncWiFiManager wm(&server, &dns); in init teil verschoben
+  wm.setSaveConfigCallback(saveConfigCallback);
+  AsyncWiFiManagerParameter custom_device_name("device_name", "Device Name", NULL, 32);
+  AsyncWiFiManagerParameter custom_coolDown_time("coolDown_time", "Cooldown Time (ms)", NULL, 5);
+  AsyncWiFiManagerParameter custom_coolDown_time("coolDown_time", "Cooldown Time (ms)", NULL, 5);
+  AsyncWiFiManagerParameter custom_bellSignal_time("bellSignal_time", "Bell Pulse Time (ms)", NULL, 5);
+  AsyncWiFiManagerParameter custom_signal_timeout("signal_timeout", "Signal Timeout (ms)", NULL, 5);
+  AsyncWiFiManagerParameter custom_rtsp_url("rtsp_url", "Camera RTSP Url", NULL, 100);
+  wm.addParameter(&custom_device_name);
+  wm.addParameter(&custom_coolDown_time);
+  wm.addParameter(&custom_bellSignal_time);
+  wm.addParameter(&custom_signal_timeout);
+  wm.addParameter(&custom_rtsp_url);
+  wm.setConnectTimeout(30);       // how long to try to connect for before continuing
+  wm.setConfigPortalTimeout(120); // auto close configportal after n seconds
 
+  MDNS.begin(settings.deviceName);
+  WiFi.hostname(settings.deviceName);
+
+  bool wifiConnected = wm.autoConnect("AEB-AP");
+
+  if (shouldSaveConfig) // save settings if wifi setup is fire up
+  {
+    settings.deviceName = custom_device_name.getValue();
+    settings.coolDownTime = atoi(custom_coolDown_time.getValue());
+    settings.bellSignalTime = atoi(custom_bellSignal_time.getValue());
+    settings.signalTimeout = atoi(custom_signal_timeout.getValue());
+    settings.rtspUrl = custom_rtsp_url.getValue();
+    settings.save();
+    delay(500);
+    ESP.restart();
+  }
+
+  if (wifiConnected)
+  {
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                AsyncResponseStream *response = request->beginResponseStream("text/html");
+                response->printf_P(HTML_HEAD);
+                response->printf_P(HTML_MAIN);
+                response->printf_P(HTML_FOOT);
+                request->send(response); });
+
+    server.on("/livejson", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                AsyncResponseStream *response = request->beginResponseStream("application/json");
+                serializeJson(jSon, *response);
+                request->send(response); });
+
+    server.on("/reboot", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", "Please wait while the device reboots...");
+                response->addHeader("Refresh", "5; url=/");
+                response->addHeader("Connection", "close");
+                request->send(response);
+                restartNow = true; });
+
+    server.on("/confirmreset", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                AsyncResponseStream *response = request->beginResponseStream("text/html");
+                response->printf_P(HTML_HEAD);
+                response->printf_P(HTML_CONFIRM_RESET);
+                response->printf_P(HTML_FOOT);
+                request->send(response); });
+
+    server.on("/reset", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                AsyncWebServerResponse *response = request->beginResponse(200, "text/plain", "Device is Erasing...");
+                response->addHeader("Refresh", "15; url=/");
+                response->addHeader("Connection", "close");
+                request->send(response);
+                delay(1000);
+                settings.reset();
+                ESP.eraseConfig();
+                ESP.restart(); });
+
+    server.on("/settings", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                AsyncResponseStream *response = request->beginResponseStream("text/html");
+                response->printf_P(HTML_HEAD);
+                response->printf_P(HTML_SETTINGS);
+                response->printf_P(HTML_FOOT);
+                request->send(response); });
+
+    server.on("/settingsedit", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                AsyncResponseStream *response = request->beginResponseStream("text/html");
+                response->printf_P(HTML_HEAD);
+                response->printf_P(HTML_SETTINGS_EDIT);
+                response->printf_P(HTML_FOOT);
+                request->send(response); });
+
+    server.on("/settingsjson", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                AsyncResponseStream *response = request->beginResponseStream("application/json");
+                DynamicJsonDocument SettingsJson(256);
+              /*  SettingsJson["device_name"] = _settings._deviceName;
+                SettingsJson["mqtt_server"] = _settings._mqttServer;
+                SettingsJson["mqtt_port"] = _settings._mqttPort;
+                SettingsJson["mqtt_topic"] = _settings._mqttTopic;
+                SettingsJson["mqtt_user"] = _settings._mqttUser;
+                SettingsJson["mqtt_password"] = _settings._mqttPassword;
+                SettingsJson["mqtt_refresh"] = _settings._mqttRefresh;
+                SettingsJson["mqtt_json"] = _settings._mqttJson?true:false;*/
+                serializeJson(SettingsJson, *response);
+                request->send(response); });
+
+    server.on("/settingssave", HTTP_POST, [](AsyncWebServerRequest *request)
+              {
+                request->redirect("/settings");
+               /* _settings._mqttServer = request->arg("post_mqttServer");
+                _settings._mqttPort = request->arg("post_mqttPort").toInt();
+                _settings._mqttUser = request->arg("post_mqttUser");
+                _settings._mqttPassword = request->arg("post_mqttPassword");
+                _settings._mqttTopic = request->arg("post_mqttTopic");
+                _settings._mqttRefresh = request->arg("post_mqttRefresh").toInt() < 1 ? 1 :  request->arg("post_mqttRefresh").toInt(); //prefent lower numbers
+                _settings._deviceName = request->arg("post_deviceName");
+                if(request->arg("post_mqttjson") == "true") _settings._mqttJson = true;
+                if(request->arg("post_mqttjson") != "true") _settings._mqttJson = false;*/
+                settings.save();
+                //delay(500);
+                settings.load(); });
+
+    server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request)
+        {
+          //updateProgress = true;
+          //delay(500);
+          request->send(200);
+          request->redirect("/"); },
+        handle_update_progress_cb);
+
+    // set the device name
+    // MDNS.begin(settings.deviceName);
+    // WiFi.hostname(settings.deviceName);
+    ws.onEvent(onEvent);
+    server.addHandler(&ws);
+    server.begin();
+    MDNS.addService("http", "tcp", 80);
+  }
+  else
+  {
+
+  }
+  
   FastLED.addLeds<WS2812B, ledPin, GRB>(leds, amount_led);
   //-----------------------------------------------------------------------------------
-  for (size_t i = 750; i < 900; i++) //make a startup Sound
+  for (size_t i = 750; i < 900; i++) // make a startup Sound
   {
     tone(buzzerOut, i);
     delay(2);
   }
-  noTone(buzzerOut); //shut off the tone
+  noTone(buzzerOut);                      // shut off the tone
   for (size_t i = 0; i < amount_led; i++) // Set the Led to start color
   {
     leds[i] = CRGB::BlueViolet;
@@ -103,9 +342,22 @@ void loop()
   digitalWrite(bellOut, bell);
   stateRing();
   stateLED();
+
+  if (WiFi.status() == WL_CONNECTED) // No use going to next step unless WIFI is up and running.
+  {                      
+    ws.cleanupClients(); // clean unused client connections
+    MDNS.update();
+  }
+
+  if (restartNow)
+  {
+    serialState("Restart");
+    ESP.restart();
+  }
+  yield();
 }
 
-void stateRing()  // Statmachine for sensors
+void stateRing() // Statmachine for sensors
 {
   switch (state)
   {

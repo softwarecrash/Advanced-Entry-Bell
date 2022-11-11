@@ -7,15 +7,11 @@ class Settings
 {
 public:
   bool _valid = false;
-  //MQTT Settings
-  bool _mqttJson = false;
-  String _deviceName = "";    //name of the device
-  String _mqttServer = "";    //host or ip from the mqtt server
-  String _mqttUser = "";      //mqtt username to login
-  String _mqttPassword = "";  //mqtt passwort
-  String _mqttTopic = "";     //MQTT Topic
-  short _mqttPort = 0;        //mqtt server port
-  short _mqttRefresh = 0;     //mqtt Send Interval in Seconds
+  String deviceName;
+  short coolDownTime;    
+  short bellSignalTime;    
+  short signalTimeout;
+  String rtspUrl = "";  //mqtt passwort
 
   short readShort(int offset)
   {
@@ -74,15 +70,12 @@ public:
 
     if (_valid)
     {
-      _mqttRefresh = readShort(0x20);
-      readString(_mqttTopic, 0x20, 0x40);
-      if(readShort(0x60) == 10) _mqttJson = true;
-      if(readShort(0x60) == 00) _mqttJson = false;
-      readString(_deviceName, 0x20, 0x80);
-      readString(_mqttServer, 0x20, 0xA0);
-      readString(_mqttPassword, 0x20, 0xC0);
-      readString(_mqttUser, 0x20, 0xE0);
-      _mqttPort = readShort(0x100);
+      coolDownTime = readShort(0x20);
+      bellSignalTime = readShort(0x60);
+      signalTimeout = readShort(0x40);
+      readString(deviceName, 0x20, 0x80);
+      readString(rtspUrl, 0x20, 0xE0);
+      
     }
 
     EEPROM.end();
@@ -97,16 +90,11 @@ public:
     EEPROM.write(2, 0xAE);
     EEPROM.write(3, 0xDF);
 
-    writeShort(_mqttRefresh, 0x20);
-    writeString(_mqttTopic, 0x20, 0x40);
-    if(_mqttJson == true) writeShort((10), 0x60);
-    if(_mqttJson == false) writeShort((00), 0x60);
-    writeString(_deviceName, 0x20, 0x80);
-    writeString(_mqttServer, 0x20, 0xA0);
-    writeString(_mqttPassword, 0x20, 0xC0);
-    writeString(_mqttUser, 0x20, 0xE0);
-    writeShort(_mqttPort, 0x100);
-
+    writeShort(coolDownTime, 0x20);
+    writeShort(bellSignalTime, 0x60);
+    writeShort(signalTimeout, 0x40);
+    writeString(deviceName, 0x20, 0x80);
+    writeString(rtspUrl, 0x20, 0xE0);
     EEPROM.commit();
 
     _valid = true;
@@ -115,16 +103,11 @@ public:
   }
 
   void reset(){
-  _deviceName = "";
-  _mqttServer = "";
-  _mqttUser = "";
-  _mqttPassword = "";
-  _mqttTopic = "";
-  _mqttPort = 0;
-  _mqttRefresh = 10;
-  _mqttJson = false;
+  deviceName = "";
+  coolDownTime = 2000;
+  bellSignalTime = 1500;
+  signalTimeout = 1000;
   save();
-  delay(500);
   }
 
   Settings()
