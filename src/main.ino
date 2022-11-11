@@ -35,9 +35,9 @@
 //------------------------ Basic Configuration----------------------------
 #define sensorIn_1 D5 // Pin of the first sensor when entering the room
 #define sensorIn_2 D6 // Pin of the second sensor when entering the room
-#define buzzerOut  D7 // Pin for the buzzer that can make *BEEP BOOP BEEP*
-#define bellOut    D8 // Pin for external switch or relay that will ring the big bell
-#define ledPin     D0 // pin for ws2812 rgb stripe
+#define buzzerOut D7  // Pin for the buzzer that can make *BEEP BOOP BEEP*
+#define bellOut D8    // Pin for external switch or relay that will ring the big bell
+#define ledPin D0     // pin for ws2812 rgb stripe
 
 #define sensorState_1 false // idle state of sensor 1
 #define sensorState_2 false // idle state of sensor 2
@@ -208,7 +208,7 @@ void setup()
     ESP.restart();
   }
 
-  if (wifiConnected) //if wifi connected, start some webservers
+  if (wifiConnected) // if wifi connected, start some webservers
   {
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
               {
@@ -290,7 +290,8 @@ void setup()
                 settings.save();
                 settings.load(); });
 
-    server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request)
+    server.on(
+        "/update", HTTP_POST, [](AsyncWebServerRequest *request)
         {
           //updateProgress = true;
           //delay(500);
@@ -308,7 +309,6 @@ void setup()
   }
   else
   {
-
   }
   //-----------------------------------------------------------------------------------
   for (size_t i = 750; i < 900; i++) // make a startup Sound
@@ -334,7 +334,13 @@ void loop()
   stateLED();
 
   if (WiFi.status() == WL_CONNECTED) // No use going to next step unless WIFI is up and running.
-  {                      
+  {
+    jSon["device_name"] = settings.deviceName;
+    jSon["rtsp_url"] = settings.rtspUrl;
+    jSon["amountIn"] = amountIn;
+    jSon["amountOut"] = amountOut;
+    jSon["present"] = (amountIn - amountOut);
+
     ws.cleanupClients(); // clean unused client connections
     MDNS.update();
   }
