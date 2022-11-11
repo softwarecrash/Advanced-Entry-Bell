@@ -270,32 +270,24 @@ void setup()
     server.on("/settingsjson", HTTP_GET, [](AsyncWebServerRequest *request)
               {
                 AsyncResponseStream *response = request->beginResponseStream("application/json");
-                DynamicJsonDocument SettingsJson(256);
-              /*  SettingsJson["device_name"] = _settings._deviceName;
-                SettingsJson["mqtt_server"] = _settings._mqttServer;
-                SettingsJson["mqtt_port"] = _settings._mqttPort;
-                SettingsJson["mqtt_topic"] = _settings._mqttTopic;
-                SettingsJson["mqtt_user"] = _settings._mqttUser;
-                SettingsJson["mqtt_password"] = _settings._mqttPassword;
-                SettingsJson["mqtt_refresh"] = _settings._mqttRefresh;
-                SettingsJson["mqtt_json"] = _settings._mqttJson?true:false;*/
+                DynamicJsonDocument SettingsJson(128);
+                SettingsJson["devicename"] = settings.deviceName;
+                SettingsJson["cooldowntime"] = settings.coolDownTime;
+                SettingsJson["bellsignaltime"] = settings.bellSignalTime;
+                SettingsJson["signaltimeout"] = settings.signalTimeout;
+                //SettingsJson["ntp_time"] = _settings._mqttPassword; zeit folgt später
+
                 serializeJson(SettingsJson, *response);
                 request->send(response); });
 
     server.on("/settingssave", HTTP_POST, [](AsyncWebServerRequest *request)
               {
                 request->redirect("/settings");
-               /* _settings._mqttServer = request->arg("post_mqttServer");
-                _settings._mqttPort = request->arg("post_mqttPort").toInt();
-                _settings._mqttUser = request->arg("post_mqttUser");
-                _settings._mqttPassword = request->arg("post_mqttPassword");
-                _settings._mqttTopic = request->arg("post_mqttTopic");
-                _settings._mqttRefresh = request->arg("post_mqttRefresh").toInt() < 1 ? 1 :  request->arg("post_mqttRefresh").toInt(); //prefent lower numbers
-                _settings._deviceName = request->arg("post_deviceName");
-                if(request->arg("post_mqttjson") == "true") _settings._mqttJson = true;
-                if(request->arg("post_mqttjson") != "true") _settings._mqttJson = false;*/
+                settings.deviceName = request->arg("post_deviceName");
+                settings.coolDownTime = request->arg("post_mqttServer").toInt();
+                settings.bellSignalTime = request->arg("post_mqttPort").toInt();
+                settings.signalTimeout = request->arg("post_mqttUser").toInt();
                 settings.save();
-                //delay(500);
                 settings.load(); });
 
     server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request)

@@ -75,9 +75,7 @@ public:
       signalTimeout = readShort(0x40);
       readString(deviceName, 0x20, 0x80);
       readString(rtspUrl, 0x20, 0xE0);
-      
     }
-
     EEPROM.end();
   }
 
