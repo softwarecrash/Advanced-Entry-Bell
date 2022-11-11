@@ -69,8 +69,8 @@ long unsigned int lastStateMillis; // time from last statechange
 long unsigned int wsTime = 0;      // animate timer
 int wsPixNum = 0;                  // animate led counter
 bool shouldSaveConfig = false;     // flag for saving data
-bool restartNow = false;
-char jsonBuffer[1024];
+bool restartNow = false;           // restart flag
+char jsonBuffer[1024];             // buffer for serialize json
 
 //------------------------------- init struct and classes---------------------------------------
 CRGB leds[amount_led];
