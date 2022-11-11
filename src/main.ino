@@ -20,6 +20,13 @@
 #include <ESPAsyncWiFiManager.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
+
+
+
+#include <NTPClient.h> //https://lastminuteengineers.com/esp8266-ntp-server-date-time-tutorial/
+#include <WiFiUdp.h>
+
+
 #include <FastLED.h>
 
 #include "Settings.h"
@@ -85,9 +92,6 @@ void setup()
     delay(2);
   }
   noTone(buzzerOut);
-
-  Serial.println("Setup Complete... Start watching");
-
   leds[0] = CRGB::BlueViolet;
   leds[1] = CRGB::BlueViolet;
   leds[3] = CRGB::BlueViolet;
@@ -95,6 +99,7 @@ void setup()
   leds[6] = CRGB::BlueViolet;
   leds[7] = CRGB::BlueViolet;
   FastLED.show();
+  Serial.println("Setup Complete... Start watching");
 }
 
 void loop()
