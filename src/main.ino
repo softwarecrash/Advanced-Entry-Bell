@@ -25,52 +25,52 @@
 
 #include <FastLED.h>
 
-#include "Settings.h"
+#include "Settings.h"              // save and load config data
 
 #include "webpages/htmlCase.h"     // The HTML Konstructor
 #include "webpages/main.h"         // landing page with menu
 #include "webpages/settings.h"     // settings page
-#include "webpages/settingsedit.h" // settings page
-//------------------------ Basic Configuration----------------------------
+#include "webpages/settingsedit.h" // edit settings page
 
-#define sensorIn_1 D5 // Pin of the first sensor when entering the room
-#define sensorIn_2 D6 // Pin of the second sensor when entering the room
-#define buzzerOut D7  // Pin for the buzzer that can make *BEEP BOOP BEEP*
-#define bellOut D8    // Pin for external switch or relay that will ring the big bell
-#define ledPin D0     // pin for ws2812 rgb stripe
+//------------------------ Basic Configuration----------------------------
+#define sensorIn_1  D5    // Pin of the first sensor when entering the room
+#define sensorIn_2  D6    // Pin of the second sensor when entering the room
+#define buzzerOut   D7    // Pin for the buzzer that can make *BEEP BOOP BEEP*
+#define bellOut     D8    // Pin for external switch or relay that will ring the big bell
+#define ledPin      D0    // pin for ws2812 rgb stripe
 
 #define sensorState_1 false // idle state of sensor 1
 #define sensorState_2 false // idle state of sensor 2
 #define bellOutState false  // idle state of pinout external switch
 #define amount_led 8
 
-CRGB leds[amount_led];
-
 long unsigned int coolDownTime = 2000;   // time after bell rings, to get back to detection
 long unsigned int bellSignalTime = 1500; // signal duration for bell pin
 long unsigned int signalTimeout = 1000;  // time after one pin is triggered to get back to detection
 
-//------------------------------------------------------------------------
-
+//-----------------------------set internal variables-------------------------------------------
 typedef enum
 {
-  IDLE,                 // idle, wait for signal
-  IN,                   // Possibil a person going in, first sensor triggered frist
-  RING,                 // first sensor triggered, second sensor triggered, make a ring
-  OUT,                  // Possibil a person going out, second sensor triggered first
-  COOLDOWN              // after action, let cooldown
-} stateList;            // list of all states
-stateList state = IDLE; // set the initial state
-bool sensor1;
-bool sensor2;
-bool buzzer;
-bool bell;
-byte ledChange; // switch for changed led data
-int amountIn;
-int amountOut;
-long unsigned int lastStateMillis;
-long unsigned int wsTime = 0;
-int wsPixNum = 0;
+  IDLE,                               // idle, wait for signal
+  IN,                                 // Possibil a person going in, first sensor triggered frist
+  RING,                               // first sensor triggered, second sensor triggered, make a ring
+  OUT,                                // Possibil a person going out, second sensor triggered first
+  COOLDOWN                            // after action, let cooldown
+} stateList;                          // list of all states
+stateList state = IDLE;               // set the initial state
+bool sensor1;                         // sensor 1 state
+bool sensor2;                         // sensor 2 state
+bool buzzer;                          // buzzer switch
+bool bell;                            // bell outgoing switch
+byte ledChange;                       // switch for changed led data
+int amountIn;                         // counter ingoing
+int amountOut;                        // counter outgoing
+long unsigned int lastStateMillis;    // time from last statechange
+long unsigned int wsTime = 0;         // animate timer
+int wsPixNum = 0;                     // animate led counter
+
+//------------------------------- init struct and classes---------------------------------------
+CRGB leds[amount_led];
 
 void setup()
 {
@@ -82,18 +82,16 @@ void setup()
 
   FastLED.addLeds<WS2812B, ledPin, GRB>(leds, amount_led);
   //-----------------------------------------------------------------------------------
-  for (size_t i = 750; i < 900; i++)
+  for (size_t i = 750; i < 900; i++) //make a startup Sound
   {
     tone(buzzerOut, i);
     delay(2);
   }
-  noTone(buzzerOut);
-  leds[0] = CRGB::BlueViolet;
-  leds[1] = CRGB::BlueViolet;
-  leds[3] = CRGB::BlueViolet;
-  leds[4] = CRGB::BlueViolet;
-  leds[6] = CRGB::BlueViolet;
-  leds[7] = CRGB::BlueViolet;
+  noTone(buzzerOut); //shut off the tone
+  for (size_t i = 0; i < amount_led; i++) // Set the Led to start color
+  {
+    leds[i] = CRGB::BlueViolet;
+  }
   FastLED.show();
   Serial.println("Setup Complete... Start watching");
 }
@@ -107,7 +105,7 @@ void loop()
   stateLED();
 }
 
-void stateRing()
+void stateRing()  // Statmachine for sensors
 {
   switch (state)
   {
@@ -185,71 +183,73 @@ void stateRing()
   }
 }
 
-void stateLED() //LED animate states
+void stateLED() // LED animate states
 {
-  if (state != ledChange) FastLED.clear(true);
+  if (state != ledChange)
+    FastLED.clear(true);
   switch (state)
   {
-    case COOLDOWN:
-      for (size_t i = 0; i < amount_led; i++)
+  case COOLDOWN:
+    for (size_t i = 0; i < amount_led; i++)
+    {
+      leds[i] = CRGB::Blue;
+    }
+    if (state != ledChange)
+      FastLED.show();
+    break;
+
+  case IDLE:
+    for (size_t i = 0; i < amount_led; i++)
+    {
+      leds[i] = CRGB::Green;
+    }
+    if (state != ledChange)
+      FastLED.show();
+    break;
+
+  case IN:
+
+    if (millis() >= (wsTime + 50))
+    {
+      leds[wsPixNum] = CRGB(255, 119, 0);
+      FastLED.show();
+
+      if (wsPixNum < (amount_led - 1))
       {
-        leds[i] = CRGB::Blue;
-      }
-      if (state != ledChange) FastLED.show();
-      break;
-
-    case IDLE:
-      for (size_t i = 0; i < amount_led; i++)
-      {
-        leds[i] = CRGB::Green;
-      }
-      if (state != ledChange) FastLED.show();
-      break;
-
-    case IN:
-
-      if (millis() >= (wsTime + 50))
-      {
-        leds[wsPixNum] = CRGB(255, 119, 0);
-        FastLED.show();
-
-
-        if (wsPixNum < (amount_led-1))
-        {
         wsPixNum++;
-        }
-        else
-        {
-          wsPixNum = 0;
-        }
-        fadeToBlackBy( leds, amount_led, 200);
-        wsTime = millis();
       }
-      break;
-
-    case OUT:
-
-      if (millis() >= (wsTime + 50))
+      else
       {
-        leds[wsPixNum] = CRGB(212, 255, 0);
-        FastLED.show();
-        if (wsPixNum > 0)
-        {
-          wsPixNum--;
-        }
-        else
-        {
-          wsPixNum = (amount_led-1);
-        }
-        fadeToBlackBy( leds, amount_led, 200);
-        wsTime = millis();
+        wsPixNum = 0;
       }
-      break;
+      fadeToBlackBy(leds, amount_led, 200);
+      wsTime = millis();
+    }
+    break;
+
+  case OUT:
+
+    if (millis() >= (wsTime + 50))
+    {
+      leds[wsPixNum] = CRGB(212, 255, 0);
+      FastLED.show();
+      if (wsPixNum > 0)
+      {
+        wsPixNum--;
+      }
+      else
+      {
+        wsPixNum = (amount_led - 1);
+      }
+      fadeToBlackBy(leds, amount_led, 200);
+      wsTime = millis();
+    }
+    break;
   }
   ledChange = state; // set the current state to change
 }
 
-void serialState(String message) //serial messages, only message changes will go out
+void serialState(String message) // serial messages, only message changes will go out
 {
   String tmpMessage;
   if (tmpMessage != message)
