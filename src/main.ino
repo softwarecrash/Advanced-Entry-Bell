@@ -12,7 +12,6 @@
   - videoplayer mit kamerafeed
 */
 #include <Arduino.h>
-
 #include <EEPROM.h>
 
 #include <ArduinoJson.h>
@@ -21,11 +20,8 @@
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
-
-
 #include <NTPClient.h> //https://lastminuteengineers.com/esp8266-ntp-server-date-time-tutorial/
 #include <WiFiUdp.h>
-
 
 #include <FastLED.h>
 
@@ -34,7 +30,7 @@
 #include "webpages/htmlCase.h"     // The HTML Konstructor
 #include "webpages/main.h"         // landing page with menu
 #include "webpages/settings.h"     // settings page
-#include "webpages/settingsedit.h" // mqtt settings page
+#include "webpages/settingsedit.h" // settings page
 //------------------------ Basic Configuration----------------------------
 
 #define sensorIn_1 D5 // Pin of the first sensor when entering the room
