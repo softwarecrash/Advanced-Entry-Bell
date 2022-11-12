@@ -7,7 +7,7 @@
   TODO:
   - webseite mit zählern (reset um mitternacht)
   - ntp einbauen (sommer winterzeit nicht vergessen)
-  - einstellbares zeitfenster wann die klingel arbeiten soll
+  - einstellbares zeitfenster wann die klingel arbeiten soll - verworfen, led nach zeit x ausschalten
   - FS für klingelton, abspielbar auf desktop
   - videoplayer mit kamerafeed
 */
@@ -347,6 +347,7 @@ void loop()
   digitalWrite(bellOut, bell);
   stateRing();
   stateLED();
+  
 
   if (WiFi.status() == WL_CONNECTED) // No use going to next step unless WIFI is up and running.
   {
@@ -357,7 +358,7 @@ void loop()
     jSon["amountIn"] = amountIn;
     jSon["amountOut"] = amountOut;
     jSon["present"] = (amountIn - amountOut);
-    jSon["lastDetection"] = timeClient.getFormattedTime();
+    jSon["lastDetection"] = timeClient.getHours();
 
     ws.cleanupClients(); // clean unused client connections
     MDNS.update();
@@ -366,7 +367,7 @@ void loop()
     if (millis() >= (testtime+1000))
     {
       
-
+      amountIn++;
 
       notifyClients();
       testtime = millis();
