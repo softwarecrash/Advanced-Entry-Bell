@@ -372,10 +372,14 @@ void loop()
       notifyClients();
       testtime = millis();
 
-
-      
     }
 
+  }
+
+  if(timeClient.getHours() == 00 && timeClient.getMinutes() == 00 && timeClient.getSeconds() == 00) //restart at daychange
+  {
+    amountIn = 0;
+    amountOut = 0;
   }
 
   if (restartNow)
