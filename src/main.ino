@@ -71,6 +71,10 @@ int wsPixNum = 0;                  // animate led counter
 bool shouldSaveConfig = false;     // flag for saving data
 bool restartNow = false;           // restart flag
 char jsonBuffer[1024];             // buffer for serialize json
+const long utcOffsetSec = 3600;    // Time offset in Seconds
+const long ntpUpdate = 60000;       // ntp update interval
+
+long unsigned int testtime;
 
 //------------------------------- init struct and classes---------------------------------------
 CRGB leds[amount_led];
@@ -82,6 +86,8 @@ AsyncWebSocketClient *wsClient;
 DNSServer dns;
 DynamicJsonDocument jSon(1024);     // main Json
 AsyncWiFiManager wm(&server, &dns); // war im setup
+WiFiUDP ntpUDP;
+NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetSec, ntpUpdate);
 
 void saveConfigCallback() // callback for data saving
 {
@@ -191,8 +197,7 @@ void setup()
   wm.setConnectTimeout(30);       // how long to try to connect for before continuing
   wm.setConfigPortalTimeout(120); // auto close configportal after n seconds
 
-  MDNS.begin(settings.deviceName);
-  WiFi.hostname(settings.deviceName);
+
 
   bool wifiConnected = wm.autoConnect("AEB-AP");
 
@@ -306,6 +311,7 @@ void setup()
     server.addHandler(&ws);
     server.begin();
     MDNS.addService("http", "tcp", 80);
+    timeClient.begin();
   }
   else
   {
@@ -322,7 +328,16 @@ void setup()
     leds[i] = CRGB::BlueViolet;
   }
   FastLED.show();
+  Serial.println("Loading settings...");
+  Serial.println("Device Name: " +  settings.deviceName);
+  Serial.println("Cooldown Time: " + settings.coolDownTime);
+  Serial.println("Bell Signal Time: " + settings.bellSignalTime);
+  Serial.println("Signal Timeout: " + settings.signalTimeout);
+  Serial.println("RTSP URL: " + settings.rtspUrl);
   Serial.println("Setup Complete... Start watching");
+
+    MDNS.begin(settings.deviceName);
+  WiFi.hostname(settings.deviceName);
 }
 
 void loop()
@@ -335,14 +350,31 @@ void loop()
 
   if (WiFi.status() == WL_CONNECTED) // No use going to next step unless WIFI is up and running.
   {
+    timeClient.update();
+
     jSon["device_name"] = settings.deviceName;
     jSon["rtsp_url"] = settings.rtspUrl;
     jSon["amountIn"] = amountIn;
     jSon["amountOut"] = amountOut;
     jSon["present"] = (amountIn - amountOut);
+    jSon["lastDetection"] = timeClient.getFormattedTime();
 
     ws.cleanupClients(); // clean unused client connections
     MDNS.update();
+
+    //only for testing
+    if (millis() >= (testtime+1000))
+    {
+      
+
+
+      notifyClients();
+      testtime = millis();
+
+
+      
+    }
+
   }
 
   if (restartNow)
