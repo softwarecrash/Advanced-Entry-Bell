@@ -330,9 +330,9 @@ void setup()
   FastLED.show();
   Serial.println("Loading settings...");
   Serial.println("Device Name: " +  settings.deviceName);
-  Serial.println("Cooldown Time: " + settings.coolDownTime);
-  Serial.println("Bell Signal Time: " + settings.bellSignalTime);
-  Serial.println("Signal Timeout: " + settings.signalTimeout);
+  Serial.println("Cooldown Time: " + String(settings.coolDownTime));
+  Serial.println("Bell Signal Time: " + String(settings.bellSignalTime));
+  Serial.println("Signal Timeout: " + String(settings.signalTimeout));
   Serial.println("RTSP URL: " + settings.rtspUrl);
   Serial.println("Setup Complete... Start watching");
 
