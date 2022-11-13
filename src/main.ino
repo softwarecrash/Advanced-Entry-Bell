@@ -74,6 +74,8 @@ bool restartNow = false;           // restart flag
 char jsonBuffer[1024];             // buffer for serialize json
 const long utcOffsetSec = 3600;    // Time offset in Seconds
 const long ntpUpdate = 60000;      // ntp update interval
+float vmaxIngoing = 0.0;           // max measured ingoing speed
+float vmaxOutgoing = 0.0;          // max measured outgoing speed
 
 long unsigned int testtime;
 
@@ -364,11 +366,10 @@ void loop()
     timeClient.update();
 
     jSon["device_name"] = settings.deviceName;
-    // jSon["rtsp_url"] = settings.rtspUrl;
     jSon["amountIn"] = amountIn;
     jSon["amountOut"] = amountOut;
     jSon["present"] = (amountIn - amountOut);
-    jSon["lastDetection"] = timeClient.getHours();
+    jSon["vmaxin"] = timeClient.getHours();
 
     ws.cleanupClients(); // clean unused client connections
     MDNS.update();
