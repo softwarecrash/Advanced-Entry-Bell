@@ -423,6 +423,16 @@ void stateRing() // Statmachine for sensors
   case IN:
     if (sensor2 != sensorState_2)
     {
+      //-------------------------haut noch garnicht hin
+      /*1 km is 1000m
+        1h is 3600s
+
+        So 1km/h = 1000m/3600s or 0.277m/s
+        
+        */
+      vmaxIngoing = ((millis() - lastStateMillis)/277.7);
+      serialState("vmax in: " + String(vmaxIngoing));
+      
       state = RING;
       lastStateMillis = millis();
     }
