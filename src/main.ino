@@ -21,6 +21,7 @@
 #include <ESPAsyncWebServer.h>
 
 #include <NTPClient.h> //https://lastminuteengineers.com/esp8266-ntp-server-date-time-tutorial/
+//https://github.com/JChristensen/Timezone
 #include <WiFiUdp.h>
 
 #include <FastLED.h>
@@ -72,7 +73,7 @@ bool shouldSaveConfig = false;     // flag for saving data
 bool restartNow = false;           // restart flag
 char jsonBuffer[1024];             // buffer for serialize json
 const long utcOffsetSec = 3600;    // Time offset in Seconds
-const long ntpUpdate = 60000;       // ntp update interval
+const long ntpUpdate = 60000;      // ntp update interval
 
 long unsigned int testtime;
 
@@ -84,7 +85,7 @@ AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 AsyncWebSocketClient *wsClient;
 DNSServer dns;
-DynamicJsonDocument jSon(1024);     // main Json
+DynamicJsonDocument jSon(1024); // main Json
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetSec, ntpUpdate);
 
@@ -174,32 +175,32 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
 void setup()
 {
   FastLED.addLeds<WS2812B, ledPin, GRB>(leds, amount_led);
-  leds[0] = CRGB::Green; //first Led init OK
+  leds[0] = CRGB::Green; // first Led init OK
   FastLED.show();
   Serial.begin(9600);
   pinMode(sensorIn_1, INPUT_PULLUP);
   pinMode(sensorIn_2, INPUT_PULLUP);
   pinMode(buzzerOut, OUTPUT);
   pinMode(bellOut, OUTPUT);
-  leds[1] = CRGB::Green; //Pinmode init OK
+  leds[1] = CRGB::Green; // Pinmode init OK
   FastLED.show();
   settings.load();
-  leds[2] = CRGB::Green; //settings load OK
+  leds[2] = CRGB::Green; // settings load OK
   FastLED.show();
   WiFi.persistent(true);
-  AsyncWiFiManager wm(&server, &dns); //in init teil verschoben
+  AsyncWiFiManager wm(&server, &dns); // in init teil verschoben
   wm.setSaveConfigCallback(saveConfigCallback);
-  AsyncWiFiManagerParameter custom_device_name("device_name", "Device Name", NULL, 32);
-  AsyncWiFiManagerParameter custom_coolDown_time("coolDown_time", "Cooldown Time (ms)", NULL, 5);
-  AsyncWiFiManagerParameter custom_bellSignal_time("bellSignal_time", "Bell Pulse Time (ms)", NULL, 5);
-  AsyncWiFiManagerParameter custom_signal_timeout("signal_timeout", "Signal Timeout (ms)", NULL, 5);
+  AsyncWiFiManagerParameter custom_device_name("device_name", "Device Name", "Advanced Entry Bell", 32);
+  AsyncWiFiManagerParameter custom_coolDown_time("coolDown_time", "Cooldown Time (ms)", "1500", 5);
+  AsyncWiFiManagerParameter custom_bellSignal_time("bellSignal_time", "Bell Pulse Time (ms)", "500", 5);
+  AsyncWiFiManagerParameter custom_signal_timeout("signal_timeout", "Signal Timeout (ms)", "1000", 5);
   wm.addParameter(&custom_device_name);
   wm.addParameter(&custom_coolDown_time);
   wm.addParameter(&custom_bellSignal_time);
   wm.addParameter(&custom_signal_timeout);
   wm.setConnectTimeout(10);       // how long to try to connect for before continuing
   wm.setConfigPortalTimeout(120); // auto close configportal after n seconds
-  leds[3] = CRGB::Green; //wifi manager loaded OK
+  leds[3] = CRGB::Green;          // wifi manager loaded OK
   FastLED.show();
   bool wifiConnected = wm.autoConnect("AEB-AP");
 
@@ -216,7 +217,7 @@ void setup()
 
   if (wifiConnected) // if wifi connected, start some webservers
   {
-    leds[4] = CRGB::Green; //wifi connect OK
+    leds[4] = CRGB::Green; // wifi connect OK
     FastLED.show();
     server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
               {
@@ -306,8 +307,8 @@ void setup()
           request->send(200);
           request->redirect("/"); },
         handle_update_progress_cb);
-leds[5] = CRGB::Green; //Webserver Start OK
-FastLED.show();
+    leds[5] = CRGB::Green; // Webserver Start OK
+    FastLED.show();
     // set the device name
     // MDNS.begin(settings.deviceName);
     // WiFi.hostname(settings.deviceName);
@@ -319,33 +320,33 @@ FastLED.show();
   }
   else
   {
-    leds[4] = CRGB::Red; //wifi not connected OK
+    leds[4] = CRGB::Red; // wifi not connected OK
     FastLED.show();
   }
-  
+
   //-----------------------------------------------------------------------------------
   for (size_t i = 750; i < 900; i++) // make a startup Sound
   {
     tone(buzzerOut, i);
     delay(2);
   }
-  noTone(buzzerOut);                      // shut off the tone
-  //for (size_t i = 0; i < amount_led; i++) // Set the Led to start color
+  noTone(buzzerOut); // shut off the tone
+  // for (size_t i = 0; i < amount_led; i++) // Set the Led to start color
   //{
-  //  leds[i] = CRGB::BlueViolet;
- // }
+  //   leds[i] = CRGB::BlueViolet;
+  // }
   Serial.println("Loading settings...");
-  Serial.println("Device Name: " +  settings.deviceName);
+  Serial.println("Device Name: " + settings.deviceName);
   Serial.println("Cooldown Time: " + String(settings.coolDownTime));
   Serial.println("Bell Signal Time: " + String(settings.bellSignalTime));
   Serial.println("Signal Timeout: " + String(settings.signalTimeout));
   Serial.println("RTSP URL: " + settings.rtspUrl);
   Serial.println("Setup Complete... Start watching");
-  leds[6] = CRGB::Green; //Buzzer Start OK
+  leds[6] = CRGB::Green; // Buzzer Start OK
   FastLED.show();
   MDNS.begin(settings.deviceName);
   WiFi.hostname(settings.deviceName);
-  leds[7] = CRGB::Green; //MDNS WIFI Start OK
+  leds[7] = CRGB::Green; // MDNS WIFI Start OK
   FastLED.show();
 }
 
@@ -356,14 +357,14 @@ void loop()
   digitalWrite(bellOut, bell);
   stateRing();
   stateLED();
-  
 
   if (WiFi.status() == WL_CONNECTED) // No use going to next step unless WIFI is up and running.
   {
+
     timeClient.update();
 
     jSon["device_name"] = settings.deviceName;
-    //jSon["rtsp_url"] = settings.rtspUrl;
+    // jSon["rtsp_url"] = settings.rtspUrl;
     jSon["amountIn"] = amountIn;
     jSon["amountOut"] = amountOut;
     jSon["present"] = (amountIn - amountOut);
@@ -372,26 +373,17 @@ void loop()
     ws.cleanupClients(); // clean unused client connections
     MDNS.update();
 
-
-
-
-
-    //only for testing
-    if (millis() >= (testtime+1000))
+    // only for testing
+    if (millis() >= (testtime + 1000))
     {
       amountIn++;
       notifyClients();
       testtime = millis();
     }
-
-
-
-
-
   }
 
-  if(timeClient.getHours() == 00 && timeClient.getMinutes() == 00 && timeClient.getSeconds() == 00) //restart at daychange
- {
+  if (timeClient.getHours() == 00 && timeClient.getMinutes() == 00 && timeClient.getSeconds() == 00) // restart at daychange
+  {
     amountIn = 0;
     amountOut = 0;
   }
@@ -506,7 +498,7 @@ void stateLED() // LED animate states
     {
       FastLED.show();
     }
-    if(millis() >= (lastStateMillis + 60000)) // dimm the led after one minute to half power
+    if (millis() >= (lastStateMillis + 60000)) // dimm the led after one minute to half power
     {
       fadeToBlackBy(leds, amount_led, 128);
       FastLED.show();
@@ -563,4 +555,17 @@ void serialState(String message) // serial messages, only message changes will g
     Serial.println(message);
     tmpMessage = message;
   }
+}
+
+boolean summertime_EU(int year, byte month, byte day, byte hour, byte tzHours)
+// European Daylight Savings Time calculation by "jurs" for German Arduino Forum
+// input parameters: "normal time" for year, month, day, hour and tzHours (0=UTC, 1=MEZ)
+// return value: returns true during Daylight Saving Time, false otherwise
+{ 
+  if (month<3 || month>10) return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
+  if (month>3 && month<10) return true; // Sommerzeit in Apr, Mai, Jun, Jul, Aug, Sep
+  if (month==3 && (hour + 24 * day)>=(1 + tzHours + 24*(31 - (5 * year /4 + 4) % 7)) || month==10 && (hour + 24 * day)<(1 + tzHours + 24*(31 - (5 * year /4 + 1) % 7))) 
+    return true; 
+  else 
+    return false;
 }
