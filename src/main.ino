@@ -85,7 +85,7 @@ AsyncWebSocket ws("/ws");
 AsyncWebSocketClient *wsClient;
 DNSServer dns;
 DynamicJsonDocument jSon(1024);     // main Json
-AsyncWiFiManager wm(&server, &dns); // war im setup
+//AsyncWiFiManager wm(&server, &dns); // war im setup
 WiFiUDP ntpUDP;
 NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetSec, ntpUpdate);
 
@@ -182,19 +182,17 @@ void setup()
   FastLED.addLeds<WS2812B, ledPin, GRB>(leds, amount_led);
   settings.load();
   WiFi.persistent(true);
-  // AsyncWiFiManager wm(&server, &dns); in init teil verschoben
+  AsyncWiFiManager wm(&server, &dns); //in init teil verschoben
   wm.setSaveConfigCallback(saveConfigCallback);
   AsyncWiFiManagerParameter custom_device_name("device_name", "Device Name", NULL, 32);
   AsyncWiFiManagerParameter custom_coolDown_time("coolDown_time", "Cooldown Time (ms)", NULL, 5);
   AsyncWiFiManagerParameter custom_bellSignal_time("bellSignal_time", "Bell Pulse Time (ms)", NULL, 5);
   AsyncWiFiManagerParameter custom_signal_timeout("signal_timeout", "Signal Timeout (ms)", NULL, 5);
-  AsyncWiFiManagerParameter custom_rtsp_url("rtsp_url", "Camera RTSP Url", NULL, 100);
   wm.addParameter(&custom_device_name);
   wm.addParameter(&custom_coolDown_time);
   wm.addParameter(&custom_bellSignal_time);
   wm.addParameter(&custom_signal_timeout);
-  wm.addParameter(&custom_rtsp_url);
-  wm.setConnectTimeout(30);       // how long to try to connect for before continuing
+  wm.setConnectTimeout(10);       // how long to try to connect for before continuing
   wm.setConfigPortalTimeout(120); // auto close configportal after n seconds
 
 
@@ -207,11 +205,12 @@ void setup()
     settings.coolDownTime = atoi(custom_coolDown_time.getValue());
     settings.bellSignalTime = atoi(custom_bellSignal_time.getValue());
     settings.signalTimeout = atoi(custom_signal_timeout.getValue());
-    settings.rtspUrl = custom_rtsp_url.getValue();
     settings.save();
     delay(500);
     ESP.restart();
   }
+
+  
 
   if (wifiConnected) // if wifi connected, start some webservers
   {
@@ -311,12 +310,14 @@ void setup()
     server.addHandler(&ws);
     server.begin();
     MDNS.addService("http", "tcp", 80);
-    timeClient.begin();
+    //timeClient.begin();
   }
   else
   {
   }
+  
   //-----------------------------------------------------------------------------------
+
   for (size_t i = 750; i < 900; i++) // make a startup Sound
   {
     tone(buzzerOut, i);
@@ -336,7 +337,7 @@ void setup()
   Serial.println("RTSP URL: " + settings.rtspUrl);
   Serial.println("Setup Complete... Start watching");
 
-    MDNS.begin(settings.deviceName);
+  MDNS.begin(settings.deviceName);
   WiFi.hostname(settings.deviceName);
 }
 
@@ -354,7 +355,7 @@ void loop()
     timeClient.update();
 
     jSon["device_name"] = settings.deviceName;
-    jSon["rtsp_url"] = settings.rtspUrl;
+    //jSon["rtsp_url"] = settings.rtspUrl;
     jSon["amountIn"] = amountIn;
     jSon["amountOut"] = amountOut;
     jSon["present"] = (amountIn - amountOut);
@@ -377,7 +378,7 @@ void loop()
   }
 
   if(timeClient.getHours() == 00 && timeClient.getMinutes() == 00 && timeClient.getSeconds() == 00) //restart at daychange
-  {
+ {
     amountIn = 0;
     amountOut = 0;
   }
