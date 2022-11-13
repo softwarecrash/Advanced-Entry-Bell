@@ -21,7 +21,11 @@
 #include <ESPAsyncWebServer.h>
 
 #include <NTPClient.h> //https://lastminuteengineers.com/esp8266-ntp-server-date-time-tutorial/
-//https://github.com/JChristensen/Timezone
+
+//einbauen & testen
+#include "NTP.h"//https://github.com/sstaub/NTP?utm_source=platformio&utm_medium=piohome
+
+
 #include <WiFiUdp.h>
 
 #include <FastLED.h>
@@ -370,6 +374,7 @@ void loop()
     jSon["amountOut"] = amountOut;
     jSon["present"] = (amountIn - amountOut);
     jSon["vmaxin"] = timeClient.getHours();
+    jSon["vmaxout"] = timeClient.getHours();
 
     ws.cleanupClients(); // clean unused client connections
     MDNS.update();
@@ -392,6 +397,7 @@ void loop()
   if (restartNow)
   {
     serialState("Restart");
+    delay(250);
     ESP.restart();
   }
   yield();

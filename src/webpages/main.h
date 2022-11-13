@@ -31,7 +31,15 @@ const char HTML_MAIN[] PROGMEM = R"rawliteral(
         <div class="bg-light">vmax Ingoing: </div>
     </div>
     <div class="col">
-        <div class="bg-light"><span id="rtspurl"></span></div>
+        <div class="bg-light"><span id="vmaxin"></span></div>
+    </div>
+</div>
+<div class="row gx-0 mb-2">
+    <div class="col">
+        <div class="bg-light">vmax Outgoing: </div>
+    </div>
+    <div class="col">
+        <div class="bg-light"><span id="vmaxout"></span></div>
     </div>
 </div>
 
@@ -65,6 +73,7 @@ const char HTML_MAIN[] PROGMEM = R"rawliteral(
         document.getElementById("amountout").innerHTML = data.amountOut;
         document.getElementById("present").innerHTML = data.present;
         document.getElementById("vmaxin").innerHTML = data.vmaxin + ' km/h';
+        document.getElementById("vmaxout").innerHTML = data.vmaxout + ' km/h';
     }
 
     function onLoad(event) {
