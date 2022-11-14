@@ -545,7 +545,7 @@ void stateLED() // LED animate states
       {
         wsPixNum = 0;
       }
-      fadeToBlackBy(leds, amount_led, 200);
+      fadeToBlackBy(leds, amount_led, 80);
       wsTime = millis();
     }
     break;
@@ -564,7 +564,7 @@ void stateLED() // LED animate states
       {
         wsPixNum = (amount_led - 1);
       }
-      fadeToBlackBy(leds, amount_led, 200);
+      fadeToBlackBy(leds, amount_led, 80);
       wsTime = millis();
     }
     break;
