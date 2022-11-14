@@ -338,10 +338,7 @@ void setup()
     delay(2);
   }
   noTone(buzzerOut); // shut off the tone
-  // for (size_t i = 0; i < amount_led; i++) // Set the Led to start color
-  //{
-  //   leds[i] = CRGB::BlueViolet;
-  // }
+
   Serial.println("Loading settings...");
   Serial.println("Device Name: " + settings.deviceName);
   Serial.println("Cooldown Time: " + String(settings.coolDownTime));
