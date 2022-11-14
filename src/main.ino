@@ -44,8 +44,8 @@
 #define bellOut D8    // Pin for external switch or relay that will ring the big bell
 #define ledPin D0     // pin for ws2812 rgb stripe
 
-#define sensorState_1 false // idle state of sensor 1
-#define sensorState_2 false // idle state of sensor 2
+#define sensorState_1 true // idle state of sensor 1
+#define sensorState_2 true // idle state of sensor 2
 #define bellOutState false  // idle state of pinout external switch
 #define amount_led 8
 
@@ -80,6 +80,8 @@ const long utcOffsetSec = 3600;    // Time offset in Seconds
 const long ntpUpdate = 60000;      // ntp update interval
 float vmaxIngoing = 0.0;           // max measured ingoing speed
 float vmaxOutgoing = 0.0;          // max measured outgoing speed
+float vmaxOutTemp;
+float vmaxInTemp;
 
 long unsigned int testtime;
 
@@ -423,12 +425,12 @@ void stateRing() // Statmachine for sensors
   case IN:
     if (sensor2 != sensorState_2)
     {
-      float vmaxTemp = 98*3.6 / (millis() - lastStateMillis);
-      if (vmaxIngoing < vmaxTemp)
+      vmaxInTemp = 98*3.6 / (millis() - lastStateMillis);
+      if (vmaxIngoing < vmaxInTemp)
       {
-        vmaxIngoing = vmaxTemp;
+        vmaxIngoing = vmaxInTemp;
       }
-      serialState("Ingoing Speed: " + String(vmaxTemp));
+      serialState("Ingoing Speed: " + String(vmaxInTemp));
       serialState("Vmax Ingoing: " + String(vmaxIngoing));
       
       state = RING;
@@ -459,12 +461,12 @@ void stateRing() // Statmachine for sensors
     break;
 
   case OUT:
-      float vmaxTemp = 98*3.6 / (millis() - lastStateMillis);
-      if (vmaxOutgoing < vmaxTemp)
+      vmaxOutTemp = 98*3.6 / (millis() - lastStateMillis);
+      if (vmaxOutgoing < vmaxOutTemp)
       {
-        vmaxOutgoing = vmaxTemp;
+        vmaxOutgoing = vmaxOutTemp;
       }
-      serialState("Outgoing Speed: " + String(vmaxTemp));
+      serialState("Outgoing Speed: " + String(vmaxOutTemp));
       serialState("Vmax Outgoing: " + String(vmaxOutgoing));
 
     if (sensor2 != sensorState_2 && sensor1 != sensorState_1)
@@ -565,6 +567,9 @@ void stateLED() // LED animate states
       fadeToBlackBy(leds, amount_led, 200);
       wsTime = millis();
     }
+    break;
+
+  default:
     break;
   }
   ledChange = state; // set the current state to change
