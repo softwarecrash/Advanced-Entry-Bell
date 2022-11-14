@@ -428,7 +428,8 @@ void stateRing() // Statmachine for sensors
       {
         vmaxIngoing = vmaxTemp;
       }
-      serialState("vmax in: " + String(vmaxIngoing));
+      serialState("Ingoing Speed: " + String(vmaxTemp));
+      serialState("Vmax Ingoing: " + String(vmaxIngoing));
       
       state = RING;
       lastStateMillis = millis();
@@ -458,7 +459,14 @@ void stateRing() // Statmachine for sensors
     break;
 
   case OUT:
-    // hier haut noch nicht ganz das hin was soll
+      float vmaxTemp = 98*3.6 / (millis() - lastStateMillis);
+      if (vmaxOutgoing < vmaxTemp)
+      {
+        vmaxOutgoing = vmaxTemp;
+      }
+      serialState("Outgoing Speed: " + String(vmaxTemp));
+      serialState("Vmax Outgoing: " + String(vmaxOutgoing));
+      
     if (sensor2 != sensorState_2 && sensor1 != sensorState_1)
     {
       amountOut++;
