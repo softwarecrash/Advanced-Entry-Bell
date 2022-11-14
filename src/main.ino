@@ -507,17 +507,18 @@ void stateLED() // LED animate states
     break;
 
   case IDLE:
+  if (state != ledChange)
+    {
     for (size_t i = 0; i < amount_led; i++)
     {
       leds[i] = CRGB::Green;
     }
-    if (state != ledChange)
-    {
+
       FastLED.show();
     }
-    if (millis() >= (lastStateMillis + 60000)) // dimm the led after one minute to half power
+    if(millis() >= (lastStateMillis + 60000))
     {
-      fadeToBlackBy(leds, amount_led, 128);
+      fadeToBlackBy(leds, amount_led, 1);
       FastLED.show();
     }
     break;
