@@ -424,7 +424,14 @@ void stateRing() // Statmachine for sensors
     if (sensor2 != sensorState_2)
     {
       //-------------------------haut noch garnicht hin
-      /*1 km is 1000m
+      /*
+      sensor abstand 98mm
+
+      zeit(ms) 
+
+      (strecke / 1000) / (zeit / 1000) = 
+      
+      1 km is 1000m
         1h is 3600s
 
         So 1km/h = 1000m/3600s or 0.277m/s
