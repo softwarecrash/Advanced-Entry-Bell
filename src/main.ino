@@ -37,11 +37,11 @@
 #include "webpages/settingsedit.h" // edit settings page
 
 //------------------------ Basic Configuration----------------------------
-#define sensorIn_1 D5 // Pin of the first sensor when entering the room
-#define sensorIn_2 D6 // Pin of the second sensor when entering the room
-#define buzzerOut D7  // Pin for the buzzer that can make *BEEP BOOP BEEP*
-#define bellOut D8    // Pin for external switch or relay that will ring the big bell
-#define ledPin D0     // pin for ws2812 rgb stripe
+#define sensorIn_1 D5     // Pin of the first sensor when entering the room
+#define sensorIn_2 D6     // Pin of the second sensor when entering the room
+#define buzzerOut  D7     // Pin for the buzzer that can make *BEEP BOOP BEEP*
+#define bellOut    D8     // Pin for external switch or relay that will ring the big bell
+#define ledPin     D0     // pin for ws2812 rgb stripe
 
 #define sensorState_1 true // idle state of sensor 1
 #define sensorState_2 true // idle state of sensor 2
