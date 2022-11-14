@@ -22,9 +22,8 @@
 
 #include <NTPClient.h> //https://lastminuteengineers.com/esp8266-ntp-server-date-time-tutorial/
 
-//einbauen & testen
-#include "NTP.h"//https://github.com/sstaub/NTP?utm_source=platformio&utm_medium=piohome
-
+// einbauen & testen
+#include "NTP.h" //https://github.com/sstaub/NTP?utm_source=platformio&utm_medium=piohome
 
 #include <WiFiUdp.h>
 
@@ -46,7 +45,7 @@
 
 #define sensorState_1 true // idle state of sensor 1
 #define sensorState_2 true // idle state of sensor 2
-#define bellOutState false  // idle state of pinout external switch
+#define bellOutState false // idle state of pinout external switch
 #define amount_led 8
 
 long unsigned int coolDownTime = 2000;   // time after bell rings, to get back to detection
@@ -425,14 +424,14 @@ void stateRing() // Statmachine for sensors
   case IN:
     if (sensor2 != sensorState_2)
     {
-      vmaxInTemp = 98*3.6 / (millis() - lastStateMillis);
+      vmaxInTemp = 98 * 3.6 / (millis() - lastStateMillis);
       if (vmaxIngoing < vmaxInTemp)
       {
         vmaxIngoing = vmaxInTemp;
       }
       serialState("Ingoing Speed: " + String(vmaxInTemp));
       serialState("Vmax Ingoing: " + String(vmaxIngoing));
-      
+
       state = RING;
       lastStateMillis = millis();
     }
@@ -461,13 +460,13 @@ void stateRing() // Statmachine for sensors
     break;
 
   case OUT:
-      vmaxOutTemp = 98*3.6 / (millis() - lastStateMillis);
-      if (vmaxOutgoing < vmaxOutTemp)
-      {
-        vmaxOutgoing = vmaxOutTemp;
-      }
-      serialState("Outgoing Speed: " + String(vmaxOutTemp));
-      serialState("Vmax Outgoing: " + String(vmaxOutgoing));
+    vmaxOutTemp = 98 * 3.6 / (millis() - lastStateMillis);
+    if (vmaxOutgoing < vmaxOutTemp)
+    {
+      vmaxOutgoing = vmaxOutTemp;
+    }
+    serialState("Outgoing Speed: " + String(vmaxOutTemp));
+    serialState("Vmax Outgoing: " + String(vmaxOutgoing));
 
     if (sensor2 != sensorState_2 && sensor1 != sensorState_1)
     {
@@ -514,16 +513,16 @@ void stateLED() // LED animate states
     break;
 
   case IDLE:
-  if (state != ledChange)
+    if (state != ledChange)
     {
-    for (size_t i = 0; i < amount_led; i++)
-    {
-      leds[i] = CRGB::Green;
-    }
+      for (size_t i = 0; i < amount_led; i++)
+      {
+        leds[i] = CRGB::Green;
+      }
 
       FastLED.show();
     }
-    if(millis() >= (lastStateMillis + 60000))
+    if (millis() >= (lastStateMillis + 60000))
     {
       fadeToBlackBy(leds, amount_led, 1);
       FastLED.show();
@@ -545,7 +544,7 @@ void stateLED() // LED animate states
       {
         wsPixNum = 0;
       }
-      fadeToBlackBy(leds, amount_led, 80);
+      fadeToBlackBy(leds, amount_led, 50);
       wsTime = millis();
     }
     break;
@@ -564,7 +563,7 @@ void stateLED() // LED animate states
       {
         wsPixNum = (amount_led - 1);
       }
-      fadeToBlackBy(leds, amount_led, 80);
+      fadeToBlackBy(leds, amount_led, 50);
       wsTime = millis();
     }
     break;
@@ -589,11 +588,13 @@ boolean summertime_EU(int year, byte month, byte day, byte hour, byte tzHours)
 // European Daylight Savings Time calculation by "jurs" for German Arduino Forum
 // input parameters: "normal time" for year, month, day, hour and tzHours (0=UTC, 1=MEZ)
 // return value: returns true during Daylight Saving Time, false otherwise
-{ 
-  if (month<3 || month>10) return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
-  if (month>3 && month<10) return true; // Sommerzeit in Apr, Mai, Jun, Jul, Aug, Sep
-  if (month==3 && (hour + 24 * day)>=(1 + tzHours + 24*(31 - (5 * year /4 + 4) % 7)) || month==10 && (hour + 24 * day)<(1 + tzHours + 24*(31 - (5 * year /4 + 1) % 7))) 
-    return true; 
-  else 
+{
+  if (month < 3 || month > 10)
+    return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
+  if (month > 3 && month < 10)
+    return true; // Sommerzeit in Apr, Mai, Jun, Jul, Aug, Sep
+  if (month == 3 && (hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7)) || month == 10 && (hour + 24 * day) < (1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7)))
+    return true;
+  else
     return false;
 }
