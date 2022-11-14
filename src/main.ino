@@ -374,7 +374,7 @@ void loop()
     jSon["amountOut"] = amountOut;
     jSon["present"] = (amountIn - amountOut);
     jSon["vmaxin"] = vmaxIngoing;
-    jSon["vmaxout"] = timeClient.getHours();
+    jSon["vmaxout"] = vmaxOutgoing;
 
     ws.cleanupClients(); // clean unused client connections
     MDNS.update();
@@ -466,7 +466,7 @@ void stateRing() // Statmachine for sensors
       }
       serialState("Outgoing Speed: " + String(vmaxTemp));
       serialState("Vmax Outgoing: " + String(vmaxOutgoing));
-      
+
     if (sensor2 != sensorState_2 && sensor1 != sensorState_1)
     {
       amountOut++;
