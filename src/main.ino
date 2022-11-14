@@ -533,15 +533,7 @@ void stateLED() // LED animate states
     {
       leds[wsPixNum] = CRGB(255, 119, 0);
       FastLED.show();
-
-      if (wsPixNum < (amount_led - 1))
-      {
-        wsPixNum++;
-      }
-      else
-      {
-        wsPixNum = 0;
-      }
+      (wsPixNum < (amount_led - 1)) ? wsPixNum++ : wsPixNum = 0;
       fadeToBlackBy(leds, amount_led, 50);
       wsTime = millis();
     }
@@ -552,27 +544,21 @@ void stateLED() // LED animate states
     {
       leds[wsPixNum] = CRGB(212, 255, 0);
       FastLED.show();
-      if (wsPixNum > 0)
-      {
-        wsPixNum--;
-      }
-      else
-      {
-        wsPixNum = (amount_led - 1);
-      }
+      (wsPixNum > 0) ? wsPixNum-- : wsPixNum = (amount_led - 1);
       fadeToBlackBy(leds, amount_led, 50);
       wsTime = millis();
     }
     break;
 
-    case RING:
-          for (size_t i = 0; i < amount_led; i++)
-      {
-        leds[i] = CRGB::Red;
-      }
-      if (state != ledChange) FastLED.show();
+  case RING:
+    for (size_t i = 0; i < amount_led; i++)
+    {
+      leds[i] = CRGB::Red;
+    }
+    if (state != ledChange)
+      FastLED.show();
     break;
-    
+
   default:
     break;
   }
