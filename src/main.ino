@@ -460,16 +460,16 @@ void stateRing() // Statmachine for sensors
     break;
 
   case OUT:
-    vmaxOutTemp = 98 * 3.6 / (millis() - lastStateMillis);
-    if (vmaxOutgoing < vmaxOutTemp)
-    {
-      vmaxOutgoing = vmaxOutTemp;
-    }
-    serialState("Outgoing Speed: " + String(vmaxOutTemp));
-    serialState("Vmax Outgoing: " + String(vmaxOutgoing));
-
     if (sensor2 != sensorState_2 && sensor1 != sensorState_1)
     {
+      vmaxOutTemp = 98 * 3.6 / (millis() - lastStateMillis);
+      if (vmaxOutgoing < vmaxOutTemp)
+      {
+        vmaxOutgoing = vmaxOutTemp;
+      }
+      serialState("Outgoing Speed: " + String(vmaxOutTemp));
+      serialState("Vmax Outgoing: " + String(vmaxOutgoing));
+
       amountOut++;
       serialState("Objects going out: " + String(amountOut));
       state = COOLDOWN;
@@ -530,7 +530,6 @@ void stateLED() // LED animate states
     break;
 
   case IN:
-
     if (millis() >= (wsTime + 50))
     {
       leds[wsPixNum] = CRGB(255, 119, 0);
@@ -550,7 +549,6 @@ void stateLED() // LED animate states
     break;
 
   case OUT:
-
     if (millis() >= (wsTime + 50))
     {
       leds[wsPixNum] = CRGB(212, 255, 0);
