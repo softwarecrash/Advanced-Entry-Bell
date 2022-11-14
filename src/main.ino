@@ -79,8 +79,8 @@ const long utcOffsetSec = 3600;    // Time offset in Seconds
 const long ntpUpdate = 60000;      // ntp update interval
 float vmaxIngoing = 0.0;           // max measured ingoing speed
 float vmaxOutgoing = 0.0;          // max measured outgoing speed
-float vmaxOutTemp;
-float vmaxInTemp;
+float vmaxOutTemp;                 // vmax calc temp value out
+float vmaxInTemp;                  // vmax calc temp value in
 
 long unsigned int testtime;
 
