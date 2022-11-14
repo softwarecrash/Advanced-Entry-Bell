@@ -373,7 +373,7 @@ void loop()
     jSon["amountIn"] = amountIn;
     jSon["amountOut"] = amountOut;
     jSon["present"] = (amountIn - amountOut);
-    jSon["vmaxin"] = timeClient.getHours();
+    jSon["vmaxin"] = vmaxIngoing;
     jSon["vmaxout"] = timeClient.getHours();
 
     ws.cleanupClients(); // clean unused client connections
@@ -423,21 +423,11 @@ void stateRing() // Statmachine for sensors
   case IN:
     if (sensor2 != sensorState_2)
     {
-      //-------------------------haut noch garnicht hin
-      /*
-      sensor abstand 98mm
-
-      zeit(ms) 
-
-      (strecke / 1000) / (zeit / 1000) = 
-      
-      1 km is 1000m
-        1h is 3600s
-
-        So 1km/h = 1000m/3600s or 0.277m/s
-        
-        */
-      vmaxIngoing = ((millis() - lastStateMillis)/277.7);
+      float vmaxTemp = 98*3.6 / (millis() - lastStateMillis);
+      if (vmaxIngoing < vmaxTemp)
+      {
+        vmaxIngoing = vmaxTemp;
+      }
       serialState("vmax in: " + String(vmaxIngoing));
       
       state = RING;
