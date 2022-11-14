@@ -519,7 +519,6 @@ void stateLED() // LED animate states
       {
         leds[i] = CRGB::Green;
       }
-
       FastLED.show();
     }
     if (millis() >= (lastStateMillis + 60000))
@@ -566,6 +565,14 @@ void stateLED() // LED animate states
     }
     break;
 
+    case RING:
+          for (size_t i = 0; i < amount_led; i++)
+      {
+        leds[i] = CRGB::Red;
+      }
+      if (state != ledChange) FastLED.show();
+    break;
+    
   default:
     break;
   }
