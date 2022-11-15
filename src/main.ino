@@ -432,7 +432,7 @@ void stateRing() // Statmachine for sensors
       state = RING;
       lastStateMillis = millis();
     }
-    else if (millis() >= (lastStateMillis + signalTimeout))
+    else if (millis() >= (lastStateMillis + signalTimeout) && sensor2 == sensorState_2 && sensor1 == sensorState_1)
     {
       state = IDLE;
     }
@@ -471,7 +471,7 @@ void stateRing() // Statmachine for sensors
       serialState("Objects going out: " + String(amountOut));
       state = COOLDOWN;
     }
-    else if (millis() >= (lastStateMillis + signalTimeout))
+    else if (millis() >= (lastStateMillis + signalTimeout) && sensor2 == sensorState_2 && sensor1 == sensorState_1)
     {
       state = IDLE;
     }
