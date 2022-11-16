@@ -196,11 +196,11 @@ void setup()
   FastLED.show();
   WiFi.persistent(true);
   AsyncWiFiManager wm(&server, &dns); // in init teil verschoben
-  wm.setSaveConfigCallback(saveConfigCallback);
   AsyncWiFiManagerParameter custom_device_name("device_name", "Device Name", "Advanced Entry Bell", 32);
   AsyncWiFiManagerParameter custom_coolDown_time("coolDown_time", "Cooldown Time (ms)", "1500", 5);
   AsyncWiFiManagerParameter custom_bellSignal_time("bellSignal_time", "Bell Pulse Time (ms)", "500", 5);
   AsyncWiFiManagerParameter custom_signal_timeout("signal_timeout", "Signal Timeout (ms)", "1000", 5);
+  wm.setSaveConfigCallback(saveConfigCallback);
   wm.addParameter(&custom_device_name);
   wm.addParameter(&custom_coolDown_time);
   wm.addParameter(&custom_bellSignal_time);
@@ -213,6 +213,7 @@ void setup()
 
   if (shouldSaveConfig) // save settings if wifi setup is fire up
   {
+    shouldSaveConfig = false;
     settings.deviceName = custom_device_name.getValue();
     settings.coolDownTime = atoi(custom_coolDown_time.getValue());
     settings.bellSignalTime = atoi(custom_bellSignal_time.getValue());
@@ -344,7 +345,6 @@ void setup()
   Serial.println("Cooldown Time: " + String(settings.coolDownTime));
   Serial.println("Bell Signal Time: " + String(settings.bellSignalTime));
   Serial.println("Signal Timeout: " + String(settings.signalTimeout));
-  Serial.println("RTSP URL: " + settings.rtspUrl);
   Serial.println("Setup Complete... Start watching");
   leds[6] = CRGB::Green; // Buzzer Start OK
   FastLED.show();
@@ -378,12 +378,13 @@ void loop()
     MDNS.update();
 
     // only for testing
-    if (millis() >= (testtime + 1000))
+   /* if (millis() >= (testtime + 1000))
     {
       amountIn++;
       notifyClients();
       testtime = millis();
     }
+    */
   }
 
   if (timeClient.getHours() == 00 && timeClient.getMinutes() == 00 && timeClient.getSeconds() == 00) // restart at daychange
