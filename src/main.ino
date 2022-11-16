@@ -67,6 +67,7 @@ bool sensor2;                      // sensor 2 state
 bool buzzer;                       // buzzer switch
 bool bell;                         // bell outgoing switch
 byte ledChange;                    // switch for changed led data
+byte stateChange;                  // switch for changed state data
 int amountIn;                      // counter ingoing
 int amountOut;                     // counter outgoing
 long unsigned int lastStateMillis; // time from last statechange
@@ -398,6 +399,11 @@ void loop()
     serialState("Restart");
     delay(250);
     ESP.restart();
+  }
+  if(stateChange != state)
+  {
+    notifyClients();
+    stateChange = state;
   }
   yield();
 }
