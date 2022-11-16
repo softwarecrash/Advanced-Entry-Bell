@@ -72,8 +72,8 @@ const char HTML_MAIN[] PROGMEM = R"rawliteral(
         document.getElementById("amountin").innerHTML = data.amountIn;
         document.getElementById("amountout").innerHTML = data.amountOut;
         document.getElementById("present").innerHTML = data.present;
-        document.getElementById("vmaxin").innerHTML = data.vmaxin + ' km/h';
-        document.getElementById("vmaxout").innerHTML = data.vmaxout + ' km/h';
+        document.getElementById("vmaxin").innerHTML = (data.vmaxin).toFixed(2) + ' km/h';
+        document.getElementById("vmaxout").innerHTML = (data.vmaxout).toFixed(2) + ' km/h';
     }
 
     function onLoad(event) {
