@@ -9,43 +9,20 @@ const char HTML_SETTINGS_EDIT[] PROGMEM = R"rawliteral(
             value="">
     </div>
     <div class="input-group mb-2">
-        <span class="input-group-text w-50" id="mqttserverdesc">MQTT Server</span>
-        <input type="text" class="form-control" aria-describedby="mqttserverdesc" id="mqttserver" name="post_mqttServer"
+        <span class="input-group-text w-50" id="cooldowntimedesc">Cooldown Time (ms)</span>
+        <input type="text" class="form-control" aria-describedby="cooldowntimedesc" id="cooldowntime" name="post_cooldownTime"
             value="">
     </div>
     <div class="input-group mb-2">
-        <span class="input-group-text w-50" id="mqttportdesc">MQTT Port</span>
-        <input type="text" class="form-control" aria-describedby="mqttportdesc" id="mqttport" name="post_mqttPort"
+        <span class="input-group-text w-50" id="bellsignaltimedesc">Bell Signal Time (ms)</span>
+        <input type="text" class="form-control" aria-describedby="bellsignaltimedesc" id="bellsignaltime" name="post_bellSignalTime"
             value="">
     </div>
     <div class="input-group mb-2">
-        <span class="input-group-text w-50" id="mqttuserdesc">MQTT User</span>
-        <input type="text" class="form-control" aria-describedby="mqttuserdesc" id="mqttuser" name="post_mqttUser"
+        <span class="input-group-text w-50" id="signaltimeoutdesc">Sensor Signal Timeout (ms)</span>
+        <input type="text" class="form-control" aria-describedby="signaltimeoutdesc" id="signaltimeout" name="post_signalTimeout"
             value="">
     </div>
-    <div class="input-group mb-2">
-        <span class="input-group-text w-50" id="mqttpassworddesc">MQTT Password</span>
-        <input type="text" class="form-control" aria-describedby="mqttpassworddesc" id="mqttpassword"
-            name="post_mqttPassword" value="">
-    </div>
-    <div class="input-group mb-2">
-        <span class="input-group-text w-50" id="mqtttopicdesc">MQTT Topic</span>
-        <input type="text" class="form-control" aria-describedby="mqtttopicdesc" id="mqtttopic" name="post_mqttTopic"
-            value="">
-    </div>
-    <div class="input-group mb-2">
-        <span class="input-group-text w-50" id="mqttrefreshdesc">MQTT Refresh</span>
-        <input type="text" class="form-control" aria-describedby="mqttrefreshdesc" id="mqttrefresh"
-            name="post_mqttRefresh" value="">
-    </div>
-    <div class="input-group mb-2">
-        <span class="input-group-text w-50" id="mqttjsondesc">MQTT Json Style</span>
-        <div class="form-switch form-control mqtt-settings-switch" style="width:50%%; text-align: center;">
-            <input type="checkbox" class="form-check-input form control" aria-describedby="mqttjsondesc"
-                role="switch" id="mqttjson" name="post_mqttjson" value="true" />
-        </div>
-    </div>
-
     <div class="d-grid gap-2">
         <input class="btn btn-primary" type="submit" value="Save settings">
 </form>
@@ -60,14 +37,10 @@ const char HTML_SETTINGS_EDIT[] PROGMEM = R"rawliteral(
             dataType: "json",
             cache: false,
             success: function (data) {
-                document.getElementById("devicename").value = data.device_name;
-                document.getElementById("mqttserver").value = data.mqtt_server;
-                document.getElementById("mqttport").value = data.mqtt_port;
-                document.getElementById("mqtttopic").value = data.mqtt_topic;
-                document.getElementById("mqttuser").value = data.mqtt_user;
-                document.getElementById("mqttpassword").value = data.mqtt_password;
-                document.getElementById("mqttrefresh").value = data.mqtt_refresh;
-                document.getElementById("mqttjson").checked = data.mqtt_json;
+                document.getElementById("devicename").value = data.devicename;
+                document.getElementById("cooldowntime").value = data.cooldowntime;
+                document.getElementById("bellsignaltime").value = data.bellsignaltime;
+                document.getElementById("signaltimeout").value = data.signaltimeout;
             }
         });
     });

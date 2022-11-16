@@ -293,7 +293,6 @@ void setup()
                 SettingsJson["cooldowntime"] = settings.coolDownTime;
                 SettingsJson["bellsignaltime"] = settings.bellSignalTime;
                 SettingsJson["signaltimeout"] = settings.signalTimeout;
-                //SettingsJson["ntp_time"] = _settings._mqttPassword; zeit folgt später
 
                 serializeJson(SettingsJson, *response);
                 request->send(response); });
@@ -302,9 +301,9 @@ void setup()
               {
                 request->redirect("/settings");
                 settings.deviceName = request->arg("post_deviceName");
-                settings.coolDownTime = request->arg("post_mqttServer").toInt();
-                settings.bellSignalTime = request->arg("post_mqttPort").toInt();
-                settings.signalTimeout = request->arg("post_mqttUser").toInt();
+                settings.coolDownTime = request->arg("post_cooldownTime").toInt();
+                settings.bellSignalTime = request->arg("post_bellSignalTime").toInt();
+                settings.signalTimeout = request->arg("post_signalTimeout").toInt();
                 settings.save();
                 settings.load(); });
 
