@@ -192,6 +192,9 @@ void setup()
   pinMode(bellOut, OUTPUT);
   leds[1] = CRGB::Green; // Pinmode init OK
   FastLED.show();
+  coolDownTime = settings.coolDownTime;
+  bellSignalTime = settings.bellSignalTime;
+  signalTimeout = settings.signalTimeout;
   settings.load();
   leds[2] = CRGB::Green; // settings load OK
   FastLED.show();
