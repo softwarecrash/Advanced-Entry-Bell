@@ -48,9 +48,9 @@
 #define bellOutState false // idle state of pinout external switch
 #define amount_led 8
 
-long unsigned int coolDownTime = 2000;   // time after bell rings, to get back to detection
-long unsigned int bellSignalTime = 1500; // signal duration for bell pin
-long unsigned int signalTimeout = 1000;  // time after one pin is triggered to get back to detection
+//long unsigned int coolDownTime = 2000;   // time after bell rings, to get back to detection
+//long unsigned int bellSignalTime = 1500; // signal duration for bell pin
+//long unsigned int signalTimeout = 1000;  // time after one pin is triggered to get back to detection
 
 //-----------------------------set internal variables-------------------------------------------
 typedef enum
@@ -192,9 +192,6 @@ void setup()
   pinMode(bellOut, OUTPUT);
   leds[1] = CRGB::Green; // Pinmode init OK
   FastLED.show();
-  coolDownTime = settings.coolDownTime;
-  bellSignalTime = settings.bellSignalTime;
-  signalTimeout = settings.signalTimeout;
   settings.load();
   leds[2] = CRGB::Green; // settings load OK
   FastLED.show();
@@ -434,7 +431,7 @@ void stateRing() // Statmachine for sensors
       state = RING;
       lastStateMillis = millis();
     }
-    else if (millis() >= (lastStateMillis + signalTimeout) && sensor2 == sensorState_2 && sensor1 == sensorState_1)
+    else if (millis() >= (lastStateMillis + settings.signalTimeout) && sensor2 == sensorState_2 && sensor1 == sensorState_1)
     {
       state = IDLE;
     }
@@ -443,11 +440,11 @@ void stateRing() // Statmachine for sensors
   case RING:
     bell = true;
     tone(buzzerOut, 800);
-    if (millis() >= (lastStateMillis + (bellSignalTime / 2)))
+    if (millis() >= (lastStateMillis + (settings.bellSignalTime / 2)))
     {
       tone(buzzerOut, 650);
     }
-    if (millis() >= (lastStateMillis + bellSignalTime))
+    if (millis() >= (lastStateMillis + settings.bellSignalTime))
     {
       noTone(buzzerOut);
       bell = false;
@@ -473,14 +470,14 @@ void stateRing() // Statmachine for sensors
       serialState("Objects going out: " + String(amountOut));
       state = COOLDOWN;
     }
-    else if (millis() >= (lastStateMillis + signalTimeout) && sensor2 == sensorState_2 && sensor1 == sensorState_1)
+    else if (millis() >= (lastStateMillis + settings.signalTimeout) && sensor2 == sensorState_2 && sensor1 == sensorState_1)
     {
       state = IDLE;
     }
     break;
 
   case COOLDOWN:
-    if (millis() >= (lastStateMillis + coolDownTime))
+    if (millis() >= (lastStateMillis + settings.coolDownTime))
     {
       serialState("Objects inside: " + String((amountIn - amountOut)));
       state = IDLE;
