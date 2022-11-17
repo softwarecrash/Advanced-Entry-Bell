@@ -438,7 +438,7 @@ void stateRing() // Statmachine for sensors
     break;
 
   case RING:
-    if (millis() >= (settings.coolDownTime * 3))
+    if (millis() >= (lastStateMillis + (settings.coolDownTime * 3)))
     {
       bell = true;
     }
