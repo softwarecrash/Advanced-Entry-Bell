@@ -48,9 +48,9 @@
 #define bellOutState false // idle state of pinout external switch
 #define amount_led 8
 
-//long unsigned int coolDownTime = 2000;   // time after bell rings, to get back to detection
-//long unsigned int bellSignalTime = 1500; // signal duration for bell pin
-//long unsigned int signalTimeout = 1000;  // time after one pin is triggered to get back to detection
+// long unsigned int coolDownTime = 2000;   // time after bell rings, to get back to detection
+// long unsigned int bellSignalTime = 1500; // signal duration for bell pin
+// long unsigned int signalTimeout = 1000;  // time after one pin is triggered to get back to detection
 
 //-----------------------------set internal variables-------------------------------------------
 typedef enum
@@ -438,7 +438,10 @@ void stateRing() // Statmachine for sensors
     break;
 
   case RING:
-    bell = true;
+    if (millis() >= (settings.coolDownTime * 3))
+    {
+      bell = true;
+    }
     tone(buzzerOut, 800);
     if (millis() >= (lastStateMillis + (settings.bellSignalTime / 2)))
     {
