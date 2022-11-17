@@ -456,7 +456,7 @@ void stateRing() // Statmachine for sensors
     break;
 
   case OUT:
-    if (sensor2 != sensorState_2 && sensor1 != sensorState_1)
+    if (sensor1 != sensorState_1)
     {
       vmaxOutTemp = 98 * 3.6 / (millis() - lastStateMillis);
       if (vmaxOutgoing < vmaxOutTemp)
@@ -570,7 +570,7 @@ void serialState(String message) // serial messages, only message changes will g
     tmpMessage = message;
   }
 }
-
+/*
 boolean summertime_EU(int year, byte month, byte day, byte hour, byte tzHours)
 // European Daylight Savings Time calculation by "jurs" for German Arduino Forum
 // input parameters: "normal time" for year, month, day, hour and tzHours (0=UTC, 1=MEZ)
@@ -585,3 +585,4 @@ boolean summertime_EU(int year, byte month, byte day, byte hour, byte tzHours)
   else
     return false;
 }
+*/
