@@ -388,6 +388,8 @@ void loop()
   {
     amountIn = 0;
     amountOut = 0;
+    vmaxIngoing = 0;
+    vmaxOutgoing = 0;
   }
 
   if (restartNow)
@@ -438,10 +440,7 @@ void stateRing() // Statmachine for sensors
     break;
 
   case RING:
-    if (millis() >= (lastStateMillis + (settings.coolDownTime * 3)))
-    {
-      bell = true;
-    }
+    bell = true;
     tone(buzzerOut, 800);
     if (millis() >= (lastStateMillis + (settings.bellSignalTime / 2)))
     {
