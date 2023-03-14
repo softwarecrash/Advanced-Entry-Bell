@@ -12,12 +12,8 @@ Start sequence LED Status
 8. LED: Hostname and DNS Set, ready to go!
 
 Running LED Color
-Green/off: Ready, watching Sensors
-
-Orange Running: first sensor triggered
-
-Yellow Running: Second sensor triggered
-
-Red: Ring the Bell
-
-Blue: Cooldown time running
+- Green/off: Ready, watching Sensors
+- Orange Running: first sensor triggered
+- Yellow Running: Second sensor triggered
+- Red: Ring the Bell
+- Blue: Cooldown time running
