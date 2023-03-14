@@ -13,7 +13,11 @@ Start sequence LED Status
 
 Running LED Color
 Green/off: Ready, watching Sensors
+
 Orange Running: first sensor triggered
+
 Yellow Running: Second sensor triggered
+
 Red: Ring the Bell
+
 Blue: Cooldown time running
