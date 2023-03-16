@@ -206,11 +206,12 @@ void setup()
   wm.addParameter(&custom_coolDown_time);
   wm.addParameter(&custom_bellSignal_time);
   wm.addParameter(&custom_signal_timeout);
-  wm.setConnectTimeout(10);       // how long to try to connect for before continuing
+  wm.setConnectTimeout(30);       // how long to try to connect for before continuing
   wm.setConfigPortalTimeout(120); // auto close configportal after n seconds
   leds[3] = CRGB::Green;          // wifi manager loaded OK
   FastLED.show();
-  bool wifiConnected = wm.autoConnect("AEB-AP");
+  bool wifiConnected = wm.autoConnect("AEB-AP", "1234567890");
+
 
   if (shouldSaveConfig) // save settings if wifi setup is fire up
   {
