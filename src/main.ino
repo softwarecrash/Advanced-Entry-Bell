@@ -212,7 +212,6 @@ void setup()
   FastLED.show();
   bool wifiConnected = wm.autoConnect("AEB-AP", "1234567890");
 
-
   if (shouldSaveConfig) // save settings if wifi setup is fire up
   {
     shouldSaveConfig = false;
@@ -399,8 +398,12 @@ void loop()
     delay(250);
     ESP.restart();
   }
-
-  yield();
+  if (millis() >= 86400000) // reboot every 24h
+  {
+    serialState("Restart");
+    delay(250);
+    ESP.restart();
+  }
 }
 
 void stateRing() // Statmachine for sensors
