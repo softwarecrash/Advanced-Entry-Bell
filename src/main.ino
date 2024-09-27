@@ -325,7 +325,7 @@ void setup()
     ws.onEvent(onEvent);
     server.addHandler(&ws);
     server.begin();
-    MDNS.addService("http", "tcp", 80);
+    //MDNS.addService("http", "tcp", 80);
    // timeClient.begin();
   }
   else
@@ -379,7 +379,7 @@ void loop()
     jSon["vmaxout"] = vmaxOutgoing;
 
     ws.cleanupClients(); // clean unused client connections
-    MDNS.update();
+    //MDNS.update();
 
     if (stateChange != state)
     {
