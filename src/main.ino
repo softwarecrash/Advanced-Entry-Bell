@@ -16,14 +16,14 @@
 
 #include <ArduinoJson.h>
 #include <ESP8266mDNS.h>
-#include <ESPAsyncWiFiManager.h>
+//#include <ESPAsyncWiFiManager.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
 
-#include <NTPClient.h> //https://lastminuteengineers.com/esp8266-ntp-server-date-time-tutorial/
+//#include <NTPClient.h> //https://lastminuteengineers.com/esp8266-ntp-server-date-time-tutorial/
 
 // einbauen & testen
-#include "NTP.h" //https://github.com/sstaub/NTP?utm_source=platformio&utm_medium=piohome
+//#include "NTP.h" //https://github.com/sstaub/NTP?utm_source=platformio&utm_medium=piohome
 
 #include <WiFiUdp.h>
 
@@ -92,10 +92,11 @@ Settings settings;
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 AsyncWebSocketClient *wsClient;
-DNSServer dns;
+//DNSServer dns;
+//AsyncWiFiManager wm(&server, &dns); // in init teil verschoben
 DynamicJsonDocument jSon(1024); // main Json
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetSec, ntpUpdate);
+//WiFiUDP ntpUDP;
+//NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetSec, ntpUpdate);
 
 void saveConfigCallback() // callback for data saving
 {
@@ -196,8 +197,8 @@ void setup()
   leds[2] = CRGB::Green; // settings load OK
   FastLED.show();
   WiFi.persistent(true);
-  AsyncWiFiManager wm(&server, &dns); // in init teil verschoben
-  AsyncWiFiManagerParameter custom_device_name("device_name", "Device Name", "Advanced Entry Bell", 32);
+  //AsyncWiFiManager wm(&server, &dns); // in init teil verschoben
+/*   AsyncWiFiManagerParameter custom_device_name("device_name", "Device Name", "Advanced Entry Bell", 32);
   AsyncWiFiManagerParameter custom_coolDown_time("coolDown_time", "Cooldown Time (ms)", "1500", 5);
   AsyncWiFiManagerParameter custom_bellSignal_time("bellSignal_time", "Bell Pulse Time (ms)", "500", 5);
   AsyncWiFiManagerParameter custom_signal_timeout("signal_timeout", "Signal Timeout (ms)", "1000", 5);
@@ -206,13 +207,14 @@ void setup()
   wm.addParameter(&custom_coolDown_time);
   wm.addParameter(&custom_bellSignal_time);
   wm.addParameter(&custom_signal_timeout);
-  wm.setConnectTimeout(30);       // how long to try to connect for before continuing
-  wm.setConfigPortalTimeout(120); // auto close configportal after n seconds
+  wm.setConnectTimeout(10);       // how long to try to connect for before continuing
+  wm.setConfigPortalTimeout(120); // auto close configportal after n seconds */
   leds[3] = CRGB::Green;          // wifi manager loaded OK
   FastLED.show();
-  bool wifiConnected = wm.autoConnect("AEB-AP", "1234567890");
+  //bool wifiConnected = wm.autoConnect("AEB-AP", "1234567890");
+  bool wifiConnected = WiFi.softAP("AEB", "1234567890");
 
-  if (shouldSaveConfig) // save settings if wifi setup is fire up
+/*   if (shouldSaveConfig) // save settings if wifi setup is fire up
   {
     shouldSaveConfig = false;
     settings.deviceName = custom_device_name.getValue();
@@ -222,7 +224,7 @@ void setup()
     settings.save();
     delay(500);
     ESP.restart();
-  }
+  } */
 
   if (wifiConnected) // if wifi connected, start some webservers
   {
@@ -324,7 +326,7 @@ void setup()
     server.addHandler(&ws);
     server.begin();
     MDNS.addService("http", "tcp", 80);
-    timeClient.begin();
+   // timeClient.begin();
   }
   else
   {
@@ -362,10 +364,12 @@ void loop()
   stateRing();
   stateLED();
 
-  if (WiFi.status() == WL_CONNECTED) // No use going to next step unless WIFI is up and running.
-  {
+  Serial.println( millis());
 
-    timeClient.update();
+/*   if (WiFi.status() == WL_CONNECTED) // No use going to next step unless WIFI is up and running.
+  {
+ */
+   // timeClient.update();
 
     jSon["device_name"] = settings.deviceName;
     jSon["amountIn"] = amountIn;
@@ -382,15 +386,7 @@ void loop()
       notifyClients();
       stateChange = state;
     }
-  }
-
-  if (timeClient.getHours() == 00 && timeClient.getMinutes() == 00 && timeClient.getSeconds() == 00) // restart at daychange
-  {
-    amountIn = 0;
-    amountOut = 0;
-    vmaxIngoing = 0;
-    vmaxOutgoing = 0;
-  }
+  //}
 
   if (restartNow)
   {
@@ -576,19 +572,3 @@ void serialState(String message) // serial messages, only message changes will g
     tmpMessage = message;
   }
 }
-/*
-boolean summertime_EU(int year, byte month, byte day, byte hour, byte tzHours)
-// European Daylight Savings Time calculation by "jurs" for German Arduino Forum
-// input parameters: "normal time" for year, month, day, hour and tzHours (0=UTC, 1=MEZ)
-// return value: returns true during Daylight Saving Time, false otherwise
-{
-  if (month < 3 || month > 10)
-    return false; // keine Sommerzeit in Jan, Feb, Nov, Dez
-  if (month > 3 && month < 10)
-    return true; // Sommerzeit in Apr, Mai, Jun, Jul, Aug, Sep
-  if (month == 3 && (hour + 24 * day) >= (1 + tzHours + 24 * (31 - (5 * year / 4 + 4) % 7)) || month == 10 && (hour + 24 * day) < (1 + tzHours + 24 * (31 - (5 * year / 4 + 1) % 7)))
-    return true;
-  else
-    return false;
-}
-*/
