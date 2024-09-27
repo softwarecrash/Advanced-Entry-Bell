@@ -1,8 +1,5 @@
 // https://wokwi.com/projects/346341081902744147
 
-// das noch einbauen
-// https://github.com/thomasfredericks/Bounce2
-
 /*
   TODO:
   - webseite mit zählern (reset um mitternacht)
@@ -16,25 +13,19 @@
 
 #include <ArduinoJson.h>
 #include <ESP8266mDNS.h>
-//#include <ESPAsyncWiFiManager.h>
 #include <ESPAsyncTCP.h>
 #include <ESPAsyncWebServer.h>
-
-//#include <NTPClient.h> //https://lastminuteengineers.com/esp8266-ntp-server-date-time-tutorial/
-
-// einbauen & testen
-//#include "NTP.h" //https://github.com/sstaub/NTP?utm_source=platformio&utm_medium=piohome
-
 #include <WiFiUdp.h>
-
 #include <FastLED.h>
-
 #include "Settings.h" // save and load config data
 
-#include "webpages/htmlCase.h"     // The HTML Konstructor
-#include "webpages/main.h"         // landing page with menu
-#include "webpages/settings.h"     // settings page
-#include "webpages/settingsedit.h" // edit settings page
+#include "html.h"
+#include "htmlProzessor.h" // The html Prozessor
+#include "jslibs/bootstrap_bundle_min_js.gz.h"
+#include "jslibs/bootstrap_icons_css.gz.h"
+#include "jslibs/bootstrap_min_css.gz.h"
+#include "jslibs/jquery_min_js.gz.h"
+
 
 //------------------------ Basic Configuration----------------------------
 #define sensorIn_1 D5 // Pin of the first sensor when entering the room
@@ -47,10 +38,6 @@
 #define sensorState_2 true // idle state of sensor 2
 #define bellOutState false // idle state of pinout external switch
 #define amount_led 8
-
-// long unsigned int coolDownTime = 2000;   // time after bell rings, to get back to detection
-// long unsigned int bellSignalTime = 1500; // signal duration for bell pin
-// long unsigned int signalTimeout = 1000;  // time after one pin is triggered to get back to detection
 
 //-----------------------------set internal variables-------------------------------------------
 typedef enum
@@ -68,8 +55,8 @@ bool buzzer;                       // buzzer switch
 bool bell;                         // bell outgoing switch
 byte ledChange;                    // switch for changed led data
 byte stateChange;                  // switch for changed state data
-int amountIn;                      // counter ingoing
-int amountOut;                     // counter outgoing
+int amountIn = 0;                      // counter ingoing
+int amountOut = 0;                     // counter outgoing
 long unsigned int lastStateMillis; // time from last statechange
 long unsigned int wsTime = 0;      // animate timer
 int wsPixNum = 0;                  // animate led counter
@@ -80,8 +67,8 @@ const long utcOffsetSec = 3600;    // Time offset in Seconds
 const long ntpUpdate = 60000;      // ntp update interval
 float vmaxIngoing = 0.0;           // max measured ingoing speed
 float vmaxOutgoing = 0.0;          // max measured outgoing speed
-float vmaxOutTemp;                 // vmax calc temp value out
-float vmaxInTemp;                  // vmax calc temp value in
+float vmaxOutTemp = 0.0;                 // vmax calc temp value out
+float vmaxInTemp = 0.0;                  // vmax calc temp value in
 
 long unsigned int testtime;
 
@@ -92,16 +79,7 @@ Settings settings;
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 AsyncWebSocketClient *wsClient;
-//DNSServer dns;
-//AsyncWiFiManager wm(&server, &dns); // in init teil verschoben
 DynamicJsonDocument jSon(1024); // main Json
-//WiFiUDP ntpUDP;
-//NTPClient timeClient(ntpUDP, "pool.ntp.org", utcOffsetSec, ntpUpdate);
-
-void saveConfigCallback() // callback for data saving
-{
-  shouldSaveConfig = true;
-}
 
 static void handle_update_progress_cb(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
 {
@@ -147,17 +125,6 @@ void notifyClients() // Call client for new data
   }
 }
 
-void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) // prosessing callbacks from website
-{
-  AwsFrameInfo *info = (AwsFrameInfo *)arg;
-  if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT)
-  {
-    data[len] = 0;
-    if (strcmp((char *)data, "dischargeFetSwitch_on") == 0)
-    {
-    }
-  }
-}
 
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) // ws Events
 {
@@ -173,7 +140,6 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
     serialState("Websocket Client disconneted: " + String(client->id()));
     break;
   case WS_EVT_DATA:
-    handleWebSocketMessage(arg, data, len);
     break;
   case WS_EVT_PONG:
   case WS_EVT_ERROR:
@@ -197,46 +163,45 @@ void setup()
   leds[2] = CRGB::Green; // settings load OK
   FastLED.show();
   WiFi.persistent(true);
-  //AsyncWiFiManager wm(&server, &dns); // in init teil verschoben
-/*   AsyncWiFiManagerParameter custom_device_name("device_name", "Device Name", "Advanced Entry Bell", 32);
-  AsyncWiFiManagerParameter custom_coolDown_time("coolDown_time", "Cooldown Time (ms)", "1500", 5);
-  AsyncWiFiManagerParameter custom_bellSignal_time("bellSignal_time", "Bell Pulse Time (ms)", "500", 5);
-  AsyncWiFiManagerParameter custom_signal_timeout("signal_timeout", "Signal Timeout (ms)", "1000", 5);
-  wm.setSaveConfigCallback(saveConfigCallback);
-  wm.addParameter(&custom_device_name);
-  wm.addParameter(&custom_coolDown_time);
-  wm.addParameter(&custom_bellSignal_time);
-  wm.addParameter(&custom_signal_timeout);
-  wm.setConnectTimeout(10);       // how long to try to connect for before continuing
-  wm.setConfigPortalTimeout(120); // auto close configportal after n seconds */
   leds[3] = CRGB::Green;          // wifi manager loaded OK
   FastLED.show();
-  //bool wifiConnected = wm.autoConnect("AEB-AP", "1234567890");
   bool wifiConnected = WiFi.softAP("AEB", "1234567890");
-
-/*   if (shouldSaveConfig) // save settings if wifi setup is fire up
-  {
-    shouldSaveConfig = false;
-    settings.deviceName = custom_device_name.getValue();
-    settings.coolDownTime = atoi(custom_coolDown_time.getValue());
-    settings.bellSignalTime = atoi(custom_bellSignal_time.getValue());
-    settings.signalTimeout = atoi(custom_signal_timeout.getValue());
-    settings.save();
-    delay(500);
-    ESP.restart();
-  } */
 
   if (wifiConnected) // if wifi connected, start some webservers
   {
     leds[4] = CRGB::Green; // wifi connect OK
     FastLED.show();
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+
+    server.on("/bootstrap.bundle.min.js", HTTP_GET, [](AsyncWebServerRequest *request)
               {
-                AsyncResponseStream *response = request->beginResponseStream("text/html");
-                response->printf_P(HTML_HEAD);
-                response->printf_P(HTML_MAIN);
-                response->printf_P(HTML_FOOT);
-                request->send(response); });
+                AsyncWebServerResponse *response = request->beginResponse_P( 200, "text/javascript", bootstrap_bundle_min_js, bootstrap_bundle_min_js_len, nullptr );
+                response->addHeader("Content-Encoding", "gzip");
+                request->send(response);
+              });
+    server.on("/bootstrap-icons.css", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                AsyncWebServerResponse *response = request->beginResponse_P( 200, "text/css", bootstrap_icons_css, bootstrap_icons_css_len, nullptr );
+                response->addHeader("Content-Encoding", "gzip");
+                request->send(response);
+              });
+    server.on("/bootstrap.min.css", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                AsyncWebServerResponse *response = request->beginResponse_P( 200, "text/css", bootstrap_min_css, bootstrap_min_css_len, nullptr );
+                response->addHeader("Content-Encoding", "gzip");
+                request->send(response);
+              });
+
+    server.on("/jquery.min.js", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+                AsyncWebServerResponse *response = request->beginResponse_P( 200, "text/javascript", jquery_min_js, jquery_min_js_len, nullptr );
+                response->addHeader("Content-Encoding", "gzip");
+                request->send(response);
+              });
+
+        server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+              {
+      AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", HTML_MAIN, htmlProcessor);
+      request->send(response); });
 
     server.on("/livejson", HTTP_GET, [](AsyncWebServerRequest *request)
               {
@@ -252,13 +217,10 @@ void setup()
                 request->send(response);
                 restartNow = true; });
 
-    server.on("/confirmreset", HTTP_GET, [](AsyncWebServerRequest *request)
+      server.on("/confirmreset", HTTP_GET, [](AsyncWebServerRequest *request)
               {
-                AsyncResponseStream *response = request->beginResponseStream("text/html");
-                response->printf_P(HTML_HEAD);
-                response->printf_P(HTML_CONFIRM_RESET);
-                response->printf_P(HTML_FOOT);
-                request->send(response); });
+      AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", HTML_CONFIRM_RESET, htmlProcessor);
+      request->send(response); });
 
     server.on("/reset", HTTP_GET, [](AsyncWebServerRequest *request)
               {
@@ -271,21 +233,15 @@ void setup()
                 ESP.eraseConfig();
                 ESP.restart(); });
 
-    server.on("/settings", HTTP_GET, [](AsyncWebServerRequest *request)
+      server.on("/settings", HTTP_GET, [](AsyncWebServerRequest *request)
               {
-                AsyncResponseStream *response = request->beginResponseStream("text/html");
-                response->printf_P(HTML_HEAD);
-                response->printf_P(HTML_SETTINGS);
-                response->printf_P(HTML_FOOT);
-                request->send(response); });
+      AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", HTML_SETTINGS, htmlProcessor);
+      request->send(response); });
 
-    server.on("/settingsedit", HTTP_GET, [](AsyncWebServerRequest *request)
+      server.on("/settingsedit", HTTP_GET, [](AsyncWebServerRequest *request)
               {
-                AsyncResponseStream *response = request->beginResponseStream("text/html");
-                response->printf_P(HTML_HEAD);
-                response->printf_P(HTML_SETTINGS_EDIT);
-                response->printf_P(HTML_FOOT);
-                request->send(response); });
+      AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", HTML_SETTINGS_EDIT, htmlProcessor);
+      request->send(response); });
 
     server.on("/settingsjson", HTTP_GET, [](AsyncWebServerRequest *request)
               {
@@ -312,21 +268,14 @@ void setup()
     server.on(
         "/update", HTTP_POST, [](AsyncWebServerRequest *request)
         {
-          //updateProgress = true;
-          //delay(500);
           request->send(200);
           request->redirect("/"); },
         handle_update_progress_cb);
     leds[5] = CRGB::Green; // Webserver Start OK
     FastLED.show();
-    // set the device name
-    // MDNS.begin(settings.deviceName);
-    // WiFi.hostname(settings.deviceName);
     ws.onEvent(onEvent);
     server.addHandler(&ws);
     server.begin();
-    //MDNS.addService("http", "tcp", 80);
-   // timeClient.begin();
   }
   else
   {
@@ -364,13 +313,6 @@ void loop()
   stateRing();
   stateLED();
 
-  Serial.println( millis());
-
-/*   if (WiFi.status() == WL_CONNECTED) // No use going to next step unless WIFI is up and running.
-  {
- */
-   // timeClient.update();
-
     jSon["device_name"] = settings.deviceName;
     jSon["amountIn"] = amountIn;
     jSon["amountOut"] = amountOut;
@@ -379,14 +321,12 @@ void loop()
     jSon["vmaxout"] = vmaxOutgoing;
 
     ws.cleanupClients(); // clean unused client connections
-    //MDNS.update();
 
     if (stateChange != state)
     {
       notifyClients();
       stateChange = state;
     }
-  //}
 
   if (restartNow)
   {

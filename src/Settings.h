@@ -77,6 +77,7 @@ public:
       readString(rtspUrl, 0x20, 0xE0);
     }
     EEPROM.end();
+    checkDefaults();
   }
 
   void save()
@@ -99,6 +100,17 @@ public:
 
     EEPROM.end();
   }
+
+void checkDefaults(){
+  if(deviceName == "" && coolDownTime == 0 && bellSignalTime == 0 && signalTimeout == 0 ){
+  deviceName = "Advanced Entry Bell";
+  coolDownTime = 2000;
+  bellSignalTime = 1500;
+  signalTimeout = 1000;
+  save();
+  load();
+  }
+}
 
   void reset(){
   deviceName = "";
