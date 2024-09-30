@@ -63,8 +63,6 @@ int wsPixNum = 0;                  // animate led counter
 bool shouldSaveConfig = false;     // flag for saving data
 bool restartNow = false;           // restart flag
 char jsonBuffer[1024];             // buffer for serialize json
-const long utcOffsetSec = 3600;    // Time offset in Seconds
-const long ntpUpdate = 60000;      // ntp update interval
 float vmaxIngoing = 0.0;           // max measured ingoing speed
 float vmaxOutgoing = 0.0;          // max measured outgoing speed
 float vmaxOutTemp = 0.0;                 // vmax calc temp value out
@@ -459,7 +457,7 @@ void stateLED() // LED animate states
       }
       FastLED.show();
     }
-    if (millis() >= (lastStateMillis + 60000))
+    if (millis() >= (lastStateMillis + 10000))
     {
       fadeToBlackBy(leds, amount_led, 1);
       FastLED.show();
