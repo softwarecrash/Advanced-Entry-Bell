@@ -26,7 +26,6 @@
 #include "jslibs/bootstrap_min_css.gz.h"
 #include "jslibs/jquery_min_js.gz.h"
 
-
 //------------------------ Basic Configuration----------------------------
 #define sensorIn_1 D5 // Pin of the first sensor when entering the room
 #define sensorIn_2 D6 // Pin of the second sensor when entering the room
@@ -55,8 +54,8 @@ bool buzzer;                       // buzzer switch
 bool bell;                         // bell outgoing switch
 byte ledChange;                    // switch for changed led data
 byte stateChange;                  // switch for changed state data
-int amountIn = 0;                      // counter ingoing
-int amountOut = 0;                     // counter outgoing
+int amountIn = 0;                  // counter ingoing
+int amountOut = 0;                 // counter outgoing
 long unsigned int lastStateMillis; // time from last statechange
 long unsigned int wsTime = 0;      // animate timer
 int wsPixNum = 0;                  // animate led counter
@@ -65,8 +64,8 @@ bool restartNow = false;           // restart flag
 char jsonBuffer[1024];             // buffer for serialize json
 float vmaxIngoing = 0.0;           // max measured ingoing speed
 float vmaxOutgoing = 0.0;          // max measured outgoing speed
-float vmaxOutTemp = 0.0;                 // vmax calc temp value out
-float vmaxInTemp = 0.0;                  // vmax calc temp value in
+float vmaxOutTemp = 0.0;           // vmax calc temp value out
+float vmaxInTemp = 0.0;            // vmax calc temp value in
 
 long unsigned int testtime;
 
@@ -118,11 +117,17 @@ void notifyClients() // Call client for new data
 {
   if (wsClient != nullptr && wsClient->canSend())
   {
+    jSon["device_name"] = settings.deviceName;
+    jSon["amountIn"] = amountIn;
+    jSon["amountOut"] = amountOut;
+    jSon["present"] = (amountIn - amountOut);
+    jSon["vmaxin"] = vmaxIngoing;
+    jSon["vmaxout"] = vmaxOutgoing;
+
     serializeJson(jSon, jsonBuffer);
     wsClient->text(jsonBuffer);
   }
 }
-
 
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) // ws Events
 {
@@ -136,6 +141,7 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType 
   case WS_EVT_DISCONNECT:
     wsClient = nullptr;
     serialState("Websocket Client disconneted: " + String(client->id()));
+    ws.cleanupClients(); // clean unused client connections
     break;
   case WS_EVT_DATA:
     break;
@@ -161,7 +167,7 @@ void setup()
   leds[2] = CRGB::Green; // settings load OK
   FastLED.show();
   WiFi.persistent(true);
-  leds[3] = CRGB::Green;          // wifi manager loaded OK
+  leds[3] = CRGB::Green; // wifi manager loaded OK
   FastLED.show();
   bool wifiConnected = WiFi.softAP("AEB", "1234567890");
 
@@ -174,29 +180,25 @@ void setup()
               {
                 AsyncWebServerResponse *response = request->beginResponse_P( 200, "text/javascript", bootstrap_bundle_min_js, bootstrap_bundle_min_js_len, nullptr );
                 response->addHeader("Content-Encoding", "gzip");
-                request->send(response);
-              });
+                request->send(response); });
     server.on("/bootstrap-icons.css", HTTP_GET, [](AsyncWebServerRequest *request)
               {
                 AsyncWebServerResponse *response = request->beginResponse_P( 200, "text/css", bootstrap_icons_css, bootstrap_icons_css_len, nullptr );
                 response->addHeader("Content-Encoding", "gzip");
-                request->send(response);
-              });
+                request->send(response); });
     server.on("/bootstrap.min.css", HTTP_GET, [](AsyncWebServerRequest *request)
               {
                 AsyncWebServerResponse *response = request->beginResponse_P( 200, "text/css", bootstrap_min_css, bootstrap_min_css_len, nullptr );
                 response->addHeader("Content-Encoding", "gzip");
-                request->send(response);
-              });
+                request->send(response); });
 
     server.on("/jquery.min.js", HTTP_GET, [](AsyncWebServerRequest *request)
               {
                 AsyncWebServerResponse *response = request->beginResponse_P( 200, "text/javascript", jquery_min_js, jquery_min_js_len, nullptr );
                 response->addHeader("Content-Encoding", "gzip");
-                request->send(response);
-              });
+                request->send(response); });
 
-        server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
               {
       AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", HTML_MAIN, htmlProcessor);
       request->send(response); });
@@ -215,7 +217,7 @@ void setup()
                 request->send(response);
                 restartNow = true; });
 
-      server.on("/confirmreset", HTTP_GET, [](AsyncWebServerRequest *request)
+    server.on("/confirmreset", HTTP_GET, [](AsyncWebServerRequest *request)
               {
       AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", HTML_CONFIRM_RESET, htmlProcessor);
       request->send(response); });
@@ -231,12 +233,12 @@ void setup()
                 ESP.eraseConfig();
                 ESP.restart(); });
 
-      server.on("/settings", HTTP_GET, [](AsyncWebServerRequest *request)
+    server.on("/settings", HTTP_GET, [](AsyncWebServerRequest *request)
               {
       AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", HTML_SETTINGS, htmlProcessor);
       request->send(response); });
 
-      server.on("/settingsedit", HTTP_GET, [](AsyncWebServerRequest *request)
+    server.on("/settingsedit", HTTP_GET, [](AsyncWebServerRequest *request)
               {
       AsyncWebServerResponse *response = request->beginResponse_P(200, "text/html", HTML_SETTINGS_EDIT, htmlProcessor);
       request->send(response); });
@@ -301,6 +303,13 @@ void setup()
   WiFi.hostname(settings.deviceName);
   leds[7] = CRGB::Green; // MDNS WIFI Start OK
   FastLED.show();
+
+  jSon["device_name"] = settings.deviceName;
+  jSon["amountIn"] = amountIn;
+  jSon["amountOut"] = amountOut;
+  jSon["present"] = (amountIn - amountOut);
+  jSon["vmaxin"] = vmaxIngoing;
+  jSon["vmaxout"] = vmaxOutgoing;
 }
 
 void loop()
@@ -311,20 +320,19 @@ void loop()
   stateRing();
   stateLED();
 
-    jSon["device_name"] = settings.deviceName;
+  /*   jSon["device_name"] = settings.deviceName;
     jSon["amountIn"] = amountIn;
     jSon["amountOut"] = amountOut;
     jSon["present"] = (amountIn - amountOut);
     jSon["vmaxin"] = vmaxIngoing;
-    jSon["vmaxout"] = vmaxOutgoing;
+    jSon["vmaxout"] = vmaxOutgoing; */
+  // ws.cleanupClients(); // clean unused client connections
 
-    ws.cleanupClients(); // clean unused client connections
-
-    if (stateChange != state)
-    {
-      notifyClients();
-      stateChange = state;
-    }
+  if (stateChange != state)
+  {
+    notifyClients();
+    stateChange = state;
+  }
 
   if (restartNow)
   {
